@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <div class="box">
+        <div class="arena">
+            <div class="bullet"></div>
+        </div>
+        <div class="shot--area">
+            <div class="shot--position"></div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', (_) => {
+            arena = document.querySelector('div.arena')
+            arena_react = arena.getBoundingClientRect()
+            shoot_rect = document.querySelector('div.shot--position').getBoundingClientRect()
+            bullet = document.querySelector('div.bullet')
+            bullet_rect = bullet.getBoundingClientRect()
+
+            shoot()
+        })
+
+        function setBulletPosition(left, top) {
+            bullet.style.left = (left-arena_react.left+shoot_rect.width/2) + 'px'
+            bullet.style.top = (top-arena_react.top) + 'px'
+            bullet.style.position = 'absolute'
+        }
+        
+        function move(dx, dy) {
+            
+            interval = setInterval(()=>{
+                bullet.style.left = (parseFloat(bullet.style.left) + dx) + 'px'
+                bullet.style.top = (parseFloat(bullet.style.top) + dy) + 'px'
+            })
+            // setTimeout(()=>clearInterval(interval), 20)
+        }
+
+        function shoot() {
+            arena.addEventListener('click', (e) => {
+                x = e.x - shoot_rect.x
+                y = e.y - shoot_rect.y
+                
+                
+                l = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2))
+                
+                x = x / l
+                y = y / l
+                
+                setBulletPosition(shoot_rect.x, shoot_rect.y)
+
+                dx = x * 1
+                dy = y * 1
+
+                move(dx, dy)
+            })
+        }
+    </script>
+
+</body>
+</html>

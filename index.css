@@ -1,3 +1,7 @@
+:root {
+    --width: 360px;
+}
+
 html, * {
     margin: 0;
     padding: 0;
@@ -16,8 +20,26 @@ body{
     align-items: center;
 }
 
+.box > .info {
+    width: var(--width);
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    height: 30px;
+}
+
+.info > .title {
+    color: white;
+}
+
+.info > .level {
+    font-size:16px;
+    color: white;
+}
+
 .box > .arena {
-    width: 360px;
+    width: var(--width);
     height: 480px;
     background-color: rgb(55, 55, 55);
     position: relative;
@@ -38,6 +60,13 @@ body{
     height: 40px;
     background-color: blueviolet;
 
+}
+
+.bullet {
+    width: 10px;
+    height: 10px;
+    background-color: chartreuse;
+    border-radius: 20px;
 }
 
 @keyframes shake {
