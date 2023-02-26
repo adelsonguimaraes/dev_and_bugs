@@ -1,8 +1,8 @@
 VELOCITY = 2
 BULLET_DIR_X = 1 
 BULLET_DIR_Y = 1
-BULLET_POS_X = 0
-BULLET_POS_Y = 1
+BULLET_DISPLACEMENT_X = 0
+BULLET_DISPLACEMENT_Y = 1
 GRID_SIZE = 50
 GRID_PADDING = 5
 MOB_SIZE = 40
@@ -80,13 +80,14 @@ function createArenaGrid() {
 function renderBullet() {
 
     BULLET = document.createElement('div')
+    BULLET.id = 'bullet'
     BULLET.style.width = BULLET_SIZE + 'px'
     BULLET.style.height = BULLET_SIZE + 'px'
     BULLET.style.borderRadius = '50px'
     BULLET.style.backgroundColor = 'chartreuse'
     BULLET.style.position = 'absolute'
-    BULLET.style.left = BULLET_POS_X + 'px'
-    BULLET.style.top = BULLET_POS_Y + 'px'
+    BULLET.style.left = BULLET_DISPLACEMENT_X + 'px'
+    BULLET.style.top = BULLET_DISPLACEMENT_Y + 'px'
     BULLET.style.display = 'none'
     
     ARENA.append(BULLET)
@@ -114,7 +115,7 @@ function shake(pos) {
 
 function calculateRepositionOnColisionMob(side, mob) {
     const mob_rect = mob.getBoundingClientRect()
-
+    
     switch(side) {
         case COLISION_SIDES.TOP: {
             const calculation = (mob_rect.y - arena_rect.top - BULLET_SIZE)
@@ -149,8 +150,9 @@ function mobCollisionY() {
                 && bullet_rect.left+SAFE_BOUND <= mob_rect.right && bullet_rect.right-SAFE_BOUND >= mob_rect.left) {
                 
                 BULLET_DIR_Y *= -1
-                // BULLET_POS_Y = calculateRepositionOnColisionMob(COLISION_SIDES.TOP, i['grid'])
-
+                const calc = calculateRepositionOnColisionMob(COLISION_SIDES.TOP, i['grid'])
+                setBulletPosition(null, calc)
+                
                 shake(i)
                 console.log('colidiu em cima');
             }
@@ -160,7 +162,8 @@ function mobCollisionY() {
                 && bullet_rect.left+SAFE_BOUND <= mob_rect.right && bullet_rect.right-SAFE_BOUND >= mob_rect.left) {
 
                 BULLET_DIR_Y *= -1
-                // BULLET_POS_Y = calculateRepositionOnColisionMob(COLISION_SIDES.BOTTOM, i['grid'])
+                const calc = calculateRepositionOnColisionMob(COLISION_SIDES.BOTTOM, i['grid'])
+                setBulletPosition(null, calc)
                 
                 shake(i)
                 console.log('colidiu em baixo');
@@ -183,7 +186,8 @@ function mobCollisionX() {
                 && bullet_rect.top+SAFE_BOUND <= mob_rect.bottom && bullet_rect.bottom-SAFE_BOUND >= mob_rect.top) {
                 
                 BULLET_DIR_X *= -1
-                // BULLET_POS_X = calculateRepositionOnColisionMob(COLISION_SIDES.LEFT, i['grid'])
+                const calc = calculateRepositionOnColisionMob(COLISION_SIDES.LEFT, i['grid'])
+                setBulletPosition(calc)
                 
                 shake(i)
                 console.log('colidiu na esquerda');
@@ -195,7 +199,8 @@ function mobCollisionX() {
                 
                 BULLET_DIR_X *= -1
                 
-                // BULLET_POS_X = calculateRepositionOnColisionMob(COLISION_SIDES.RIGHT, i['grid'])
+                const calc = calculateRepositionOnColisionMob(COLISION_SIDES.RIGHT, i['grid'])
+                setBulletPosition(calc)
                 
                 shake(i)
                 console.log('colidiu na direita');
@@ -205,8 +210,8 @@ function mobCollisionX() {
 }
 
 function shiftBullet() {
-    BULLET.style.left = (parseFloat(BULLET.style.left) + (BULLET_POS_X*BULLET_DIR_X)) + 'px'
-    BULLET.style.top = (parseFloat(BULLET.style.top) + BULLET_POS_Y*BULLET_DIR_Y) + 'px'
+    BULLET.style.left = (parseFloat(BULLET.style.left) + (BULLET_DISPLACEMENT_X*BULLET_DIR_X)) + 'px'
+    BULLET.style.top = (parseFloat(BULLET.style.top) + BULLET_DISPLACEMENT_Y*BULLET_DIR_Y) + 'px'
 }
 
 function arenaCollisionX() {
@@ -318,12 +323,9 @@ function drawLine() {
     })
 }
 
-
-function setBulletPosition(x, y) {
-    BULLET_POS_X = x
-    BULLET_POS_Y = y
-    BULLET.style.left = BULLET_POS_X + 'px'
-    BULLET.style.top = BULLET_POS_Y + 'px'
+function setBulletPosition(x=null, y=null) {
+    if (x!=null) BULLET.style.left = x + 'px'
+    if (y!=null) BULLET.style.top = y + 'px'
 }
 
 function shoot() {
@@ -344,8 +346,8 @@ function shoot() {
                 (shot_position_rect.y - arena_rect.y)
             )
 
-            BULLET_POS_X = (x * VELOCITY)
-            BULLET_POS_Y = (y * VELOCITY)
+            BULLET_DISPLACEMENT_X = (x * VELOCITY)
+            BULLET_DISPLACEMENT_Y = (y * VELOCITY)
 
             BULLET.style.display = 'block'
 
@@ -383,7 +385,8 @@ function reset() {
     ARENA_GRIDS = []
     ON = false
     ARENA.innerHTML = ''
-    BULLET_DIR_X = BULLET_DIR_Y = 1
+    BULLET_DIR_X = 1
+    BULLET_DIR_Y = 1
     createArenaGrid()
     levelUpdate()
 }
