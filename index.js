@@ -77,20 +77,31 @@ function createArenaGrid() {
     ARENA.append(ul)
 }
 
-function renderBullet() {
-
-    BULLET = document.createElement('div')
-    BULLET.id = 'bullet'
-    BULLET.style.width = BULLET_SIZE + 'px'
-    BULLET.style.height = BULLET_SIZE + 'px'
-    BULLET.style.borderRadius = '50px'
-    BULLET.style.backgroundColor = 'chartreuse'
-    BULLET.style.position = 'absolute'
-    BULLET.style.left = BULLET_DISPLACEMENT_X + 'px'
-    BULLET.style.top = BULLET_DISPLACEMENT_Y + 'px'
-    BULLET.style.display = 'none'
+function createBullet(x,y) {
+    const bullet = document.createElement('div')
+    bullet.classList.add('bullet')
+    bullet.style.width = BULLET_SIZE + 'px'
+    bullet.style.height = BULLET_SIZE + 'px'
+    bullet.style.borderRadius = '50px'
+    bullet.style.backgroundColor = 'chartreuse'
+    bullet.style.position = 'absolute'
+    bullet.style.left = x + 'px'
+    bullet.style.top = y + 'px'
+    bullet.dataset.directionX = 1
+    bullet.dataset.directionY = 1
     
-    ARENA.append(BULLET)
+    ARENA.append(bullet)  
+}
+
+function renderBullet(x, y) {
+    let count = 0
+
+    createBullet(x,y)
+    const showBullet = setInterval((_) => {
+        createBullet(x,y)
+        count++
+        if (count==2) clearInterval(showBullet)
+    }, 200)
 }
 
 function shake(pos) {
@@ -136,8 +147,8 @@ function calculateRepositionOnColisionMob(side, mob) {
     }
 }
 
-function mobCollisionY() {
-    let bullet_rect = BULLET.getBoundingClientRect()
+function mobCollisionY(bullet) {
+    let bullet_rect = bullet.getBoundingClientRect()
 
     for(i of ARENA_GRIDS) {
         const mob = i['grid'].querySelector('div')
@@ -149,9 +160,9 @@ function mobCollisionY() {
             if (bullet_rect.bottom >= mob_rect.top && bullet_rect.top <= mob_rect.top
                 && bullet_rect.left+SAFE_BOUND <= mob_rect.right && bullet_rect.right-SAFE_BOUND >= mob_rect.left) {
                 
-                BULLET_DIR_Y *= -1
+                bullet.dataset.directionY *= -1
                 const calc = calculateRepositionOnColisionMob(COLISION_SIDES.TOP, i['grid'])
-                setBulletPosition(null, calc)
+                setBulletPosition(bullet, null, calc)
                 
                 shake(i)
                 console.log('colidiu em cima');
@@ -161,9 +172,9 @@ function mobCollisionY() {
             if (bullet_rect.top <= mob_rect.bottom && bullet_rect.bottom >= mob_rect.bottom
                 && bullet_rect.left+SAFE_BOUND <= mob_rect.right && bullet_rect.right-SAFE_BOUND >= mob_rect.left) {
 
-                BULLET_DIR_Y *= -1
+                bullet.dataset.directionY *= -1
                 const calc = calculateRepositionOnColisionMob(COLISION_SIDES.BOTTOM, i['grid'])
-                setBulletPosition(null, calc)
+                setBulletPosition(bullet, null, calc)
                 
                 shake(i)
                 console.log('colidiu em baixo');
@@ -173,8 +184,8 @@ function mobCollisionY() {
     }
 }
 
-function mobCollisionX() {
-    let bullet_rect = BULLET.getBoundingClientRect()
+function mobCollisionX(bullet) {
+    let bullet_rect = bullet.getBoundingClientRect()
     
     for(i of ARENA_GRIDS) {
         const mob = i['grid'].querySelector('div')
@@ -185,9 +196,9 @@ function mobCollisionX() {
             if (bullet_rect.right >= mob_rect.left && bullet_rect.left <= mob_rect.left
                 && bullet_rect.top+SAFE_BOUND <= mob_rect.bottom && bullet_rect.bottom-SAFE_BOUND >= mob_rect.top) {
                 
-                BULLET_DIR_X *= -1
+                bullet.dataset.directionX *= -1
                 const calc = calculateRepositionOnColisionMob(COLISION_SIDES.LEFT, i['grid'])
-                setBulletPosition(calc)
+                setBulletPosition(bullet, calc)
                 
                 shake(i)
                 console.log('colidiu na esquerda');
@@ -197,10 +208,10 @@ function mobCollisionX() {
             if (bullet_rect.left <= mob_rect.right && bullet_rect.right >= mob_rect.right
                 && bullet_rect.top+SAFE_BOUND <= mob_rect.bottom && bullet_rect.bottom-SAFE_BOUND >= mob_rect.top) {
                 
-                BULLET_DIR_X *= -1
+                bullet.dataset.directionX *= -1
                 
                 const calc = calculateRepositionOnColisionMob(COLISION_SIDES.RIGHT, i['grid'])
-                setBulletPosition(calc)
+                setBulletPosition(bullet, calc)
                 
                 shake(i)
                 console.log('colidiu na direita');
@@ -210,49 +221,57 @@ function mobCollisionX() {
 }
 
 function shiftBullet() {
-    BULLET.style.left = (parseFloat(BULLET.style.left) + (BULLET_DISPLACEMENT_X*BULLET_DIR_X)) + 'px'
-    BULLET.style.top = (parseFloat(BULLET.style.top) + BULLET_DISPLACEMENT_Y*BULLET_DIR_Y) + 'px'
+    let bullets = document.querySelectorAll('div.bullet')
+    bullets = Array.from(bullets)
+    for(b of bullets) {
+        b.style.left = (parseFloat(b.style.left) + (BULLET_DISPLACEMENT_X*b.dataset.directionX)) + 'px'
+        b.style.top = (parseFloat(b.style.top) + BULLET_DISPLACEMENT_Y*b.dataset.directionY) + 'px'
+
+        arenaCollisionX(b)
+        arenaCollisionY(b, bullets.length)
+        mobCollisionX(b)
+        mobCollisionY(b)
+    }
 }
 
-function arenaCollisionX() {
-    let bullet_rect = BULLET.getBoundingClientRect()
+function arenaCollisionX(bullet) {
+    let bullet_rect = bullet.getBoundingClientRect()
     let arena_rect = ARENA.getBoundingClientRect()
     
     // colision on left or right side arena
     if (bullet_rect.left <= arena_rect.left) {
-        BULLET_DIR_X *= -1
+        bullet.dataset.directionX *= -1
         console.log('bateu arena equerda');
     }
     if (bullet_rect.right >= arena_rect.right) {
         console.log('bateu arena direita');
-        BULLET_DIR_X *= -1
+        bullet.dataset.directionX *= -1
     }
 }
 
-function arenaCollisionY() {
-    let bullet_rect = BULLET.getBoundingClientRect()
+function arenaCollisionY(bullet, last) {
+    let bullet_rect = bullet.getBoundingClientRect()
     let arena_rect = ARENA.getBoundingClientRect()
 
     // colision on top arena
     if (bullet_rect.top <= arena_rect.top) {
-        BULLET_DIR_Y *= -1
+        bullet.dataset.directionY *= -1
         console.log('bateu arena topo');
     }
 
     // colision on bottom arena
     if (bullet_rect.bottom >= arena_rect.bottom + shot_position.offsetHeight) {
-        ON=false
-        clearInterval(INTERVAL)
-        INTERVAL=null
-        BULLET.remove()
-        BULLET_DIR_Y = 1
-        BULLET_DIR_X = 1
-        renderBullet()
-        LEVEL++
-
-        levelUpdate(LEVEL)
-
+        
+        bullet.remove()
         console.log('bolinha destruida');
+
+        if (last<=1) {
+            ON=false
+            clearInterval(INTERVAL)
+            INTERVAL=null
+            LEVEL++
+            levelUpdate(LEVEL)
+        }
     }
 }
 
@@ -323,9 +342,9 @@ function drawLine() {
     })
 }
 
-function setBulletPosition(x=null, y=null) {
-    if (x!=null) BULLET.style.left = x + 'px'
-    if (y!=null) BULLET.style.top = y + 'px'
+function setBulletPosition(b, x=null, y=null) {
+    if (x!=null) b.style.left = x + 'px'
+    if (y!=null) b.style.top = y + 'px'
 }
 
 function shoot() {
@@ -341,23 +360,15 @@ function shoot() {
             x = (x / l)
             y = (y / l)
 
-            setBulletPosition(
-                (shot_position_rect.x + shot_position_rect.width/2 - bullet_rect.width/2 - arena_rect.x),
-                (shot_position_rect.y - arena_rect.y)
-            )
+            const bx = (shot_position_rect.x + shot_position_rect.width/2 - BULLET_SIZE/2 - arena_rect.x)
+            const by =   (shot_position_rect.y - arena_rect.y)
+            
+            renderBullet(bx, by)
 
             BULLET_DISPLACEMENT_X = (x * VELOCITY)
             BULLET_DISPLACEMENT_Y = (y * VELOCITY)
 
-            BULLET.style.display = 'block'
-
-            INTERVAL = setInterval(()=>{
-                shiftBullet()
-                arenaCollisionX()
-                arenaCollisionY()
-                mobCollisionX()
-                mobCollisionY()
-            })
+            INTERVAL = setInterval(shiftBullet)
 
             ON = true
 
@@ -408,9 +419,6 @@ document.addEventListener("DOMContentLoaded", (_) => {
     shot_position = document.querySelector('.shot--position')
     shot_position_rect = shot_position.getBoundingClientRect()
     
-    
-    renderBullet()
-    bullet_rect = BULLET.getBoundingClientRect()
     
     createArenaGrid()
     levelUpdate()
