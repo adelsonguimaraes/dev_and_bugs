@@ -1,23 +1,46 @@
-VELOCITY = 2
-BULLET_DIR_X = 1 
-BULLET_DIR_Y = 1
-BULLET_DISPLACEMENT_X = 0
-BULLET_DISPLACEMENT_Y = 1
 GRID_SIZE = 50
 GRID_PADDING = 5
 MOB_SIZE = 40
 MOB_LIFE=1000
+
+
+VELOCITY = 2
+VELOCITY_MODERATE = 2
+VELOCITY_HIGH = 3
+VELOCITY_INSANE = 5
+
+
+MODERATE_VELOCITY_COLOR = '#ffa000'
+HIGH_VELOCITY_COLOR =  '#e22b2b'
+
+
+ACTIVE_MODERATE_VELOCITY = 15
+ACTIVE_HIGH_VELOCITY = 30
+ACTIVE_INSANE_VELOCITY = 50
+
+
+BULLET_DIR_X = 1 
+BULLET_DIR_Y = 1
 BULLET_SIZE = 15
-BULLET = null
+BULLET_DISPLACEMENT_X = 0
+BULLET_DISPLACEMENT_Y = 1
+TOTAL_BULLETS = 3
+CURRENT_BULLETS = 0
+
+
 ARENA = null
 ARENA_ROWS = 6
 ARENA_COLUMNS = 8
 ARENA_GRIDS = []
+
+
 SAFE_BOUND = 2
 MIN_DAMAGE = 50
+
 INTERVAL=null
 LINE=null
 ANGLE=null
+
 LEVEL=1
 ON = false
 
@@ -77,7 +100,7 @@ function createArenaGrid() {
     ARENA.append(ul)
 }
 
-function createBullet(x,y) {
+createBullet = (x,y) => {
     const bullet = document.createElement('div')
     bullet.classList.add('bullet')
     bullet.style.width = BULLET_SIZE + 'px'
@@ -89,18 +112,25 @@ function createBullet(x,y) {
     bullet.style.top = y + 'px'
     bullet.dataset.directionX = 1
     bullet.dataset.directionY = 1
+    bullet.dataset.totalColisions = 0
     
     ARENA.append(bullet)  
 }
 
-function renderBullet(x, y) {
-    let count = 0
+setBulletColor = (bullet, color) => bullet.style.backgroundColor = color
+incrementColision = (bullet) => bullet.dataset.totalColisions++
+
+renderBullet = (x, y) => {
+    CURRENT_BULLETS=0
+    
 
     createBullet(x,y)
+    CURRENT_BULLETS++
+
     const showBullet = setInterval((_) => {
         createBullet(x,y)
-        count++
-        if (count==2) clearInterval(showBullet)
+        CURRENT_BULLETS++
+        if (CURRENT_BULLETS>=TOTAL_BULLETS) clearInterval(showBullet)
     }, 200)
 }
 
@@ -163,9 +193,9 @@ function mobCollisionY(bullet) {
                 bullet.dataset.directionY *= -1
                 const calc = calculateRepositionOnColisionMob(COLISION_SIDES.TOP, i['grid'])
                 setBulletPosition(bullet, null, calc)
+                incrementColision(bullet)
                 
                 shake(i)
-                console.log('colidiu em cima');
             }
 
             // in bottom
@@ -175,9 +205,9 @@ function mobCollisionY(bullet) {
                 bullet.dataset.directionY *= -1
                 const calc = calculateRepositionOnColisionMob(COLISION_SIDES.BOTTOM, i['grid'])
                 setBulletPosition(bullet, null, calc)
+                incrementColision(bullet)
                 
                 shake(i)
-                console.log('colidiu em baixo');
             }
             
         }
@@ -199,9 +229,9 @@ function mobCollisionX(bullet) {
                 bullet.dataset.directionX *= -1
                 const calc = calculateRepositionOnColisionMob(COLISION_SIDES.LEFT, i['grid'])
                 setBulletPosition(bullet, calc)
+                incrementColision(bullet)
                 
                 shake(i)
-                console.log('colidiu na esquerda');
             }
 
             // in right
@@ -212,9 +242,9 @@ function mobCollisionX(bullet) {
                 
                 const calc = calculateRepositionOnColisionMob(COLISION_SIDES.RIGHT, i['grid'])
                 setBulletPosition(bullet, calc)
+                incrementColision(bullet)
                 
                 shake(i)
-                console.log('colidiu na direita');
             }
         }
     }
@@ -223,9 +253,24 @@ function mobCollisionX(bullet) {
 function shiftBullet() {
     let bullets = document.querySelectorAll('div.bullet')
     bullets = Array.from(bullets)
+
     for(b of bullets) {
-        b.style.left = (parseFloat(b.style.left) + (BULLET_DISPLACEMENT_X*b.dataset.directionX)) + 'px'
-        b.style.top = (parseFloat(b.style.top) + BULLET_DISPLACEMENT_Y*b.dataset.directionY) + 'px'
+        let acelation = 1
+        if (b.dataset.totalColisions>=ACTIVE_MODERATE_VELOCITY) {
+            acelation = VELOCITY_MODERATE
+            setBulletColor(b, MODERATE_VELOCITY_COLOR)
+        }
+        if (b.dataset.totalColisions>=ACTIVE_HIGH_VELOCITY) {
+            acelation = VELOCITY_HIGH
+            setBulletColor(b, HIGH_VELOCITY_COLOR)
+        }
+        if (b.dataset.totalColisions>=ACTIVE_INSANE_VELOCITY) {
+            acelation = VELOCITY_INSANE
+            ARENA.style.filter = 'invert(75%)'
+        }
+
+        b.style.left = (parseFloat(b.style.left) + (BULLET_DISPLACEMENT_X*b.dataset.directionX*acelation)) + 'px'
+        b.style.top = (parseFloat(b.style.top) + BULLET_DISPLACEMENT_Y*b.dataset.directionY*acelation) + 'px'
 
         arenaCollisionX(b)
         arenaCollisionY(b, bullets.length)
@@ -241,10 +286,10 @@ function arenaCollisionX(bullet) {
     // colision on left or right side arena
     if (bullet_rect.left <= arena_rect.left) {
         bullet.dataset.directionX *= -1
-        console.log('bateu arena equerda');
+        incrementColision(bullet)        
     }
     if (bullet_rect.right >= arena_rect.right) {
-        console.log('bateu arena direita');
+        incrementColision(bullet)
         bullet.dataset.directionX *= -1
     }
 }
@@ -256,21 +301,22 @@ function arenaCollisionY(bullet, last) {
     // colision on top arena
     if (bullet_rect.top <= arena_rect.top) {
         bullet.dataset.directionY *= -1
-        console.log('bateu arena topo');
+        incrementColision(bullet)
     }
 
     // colision on bottom arena
     if (bullet_rect.bottom >= arena_rect.bottom + shot_position.offsetHeight) {
         
         bullet.remove()
-        console.log('bolinha destruida');
-
-        if (last<=1) {
+    
+        if (last<=1 && CURRENT_BULLETS>=TOTAL_BULLETS) {
             ON=false
             clearInterval(INTERVAL)
             INTERVAL=null
             LEVEL++
+            CURRENT_BULLETS=0
             levelUpdate(LEVEL)
+            ARENA.style.filter = 'none'
         }
     }
 }
@@ -336,8 +382,6 @@ function drawLine() {
         LINE.style.width = length + 'px'
         LINE.style.transform = `rotate(${ANGLE}deg)`
         
-        ARENA.style.cursor = 'none'
-
         ARENA.append(LINE)
     })
 }
