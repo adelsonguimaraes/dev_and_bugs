@@ -3,7 +3,7 @@ GRID_PADDING = 5
 MOB_SIZE = 40
 MOB_LIFE=1000
 MOB_LIFE_INCREMENT=10
-MOB_HUE_ROTATE=0
+MOB_HUE_ROTATE="0.0"
 
 
 VELOCITY = 2
@@ -431,18 +431,20 @@ function arenaCollisionY(bullet, last) {
     }
 }
 
-setCreatureColorFilter = () => {
-    split = MOB_HUE_ROTATE + ''.split('.')
-    let dig1 = 0;
-    let dig2 = 0;
+incrementCreatureColorFilter = () => {
 
-    // if (split[1] != null) {
-    //     if (parseInt(split[1])<9) {
-    //         dig1
-    //     }
-    // }else{
-        
-    // }
+    split = String(MOB_HUE_ROTATE).split('.')
+    let dig1 = parseInt(split[0]);
+    let dig2 = parseInt(split[1]);
+
+    if (dig2<9) {
+        dig2++
+    }else{
+        dig2 = 0
+        dig1++
+    }
+
+    MOB_HUE_ROTATE = dig1 + '.' + dig2
 }
 
 function dropCreature() {
@@ -469,7 +471,14 @@ function dropCreature() {
     life.style.backgroundColor = 'red'
     life.id = 'life'
 
-    const life_mob = (LEVEL>1) ? MOB_LIFE + (MOB_LIFE*MOB_LIFE_INCREMENT/100) : MOB_LIFE
+    let life_mob = MOB_LIFE
+
+    if (LEVEL>1) {
+        life_mob = (MOB_LIFE + (MOB_LIFE*MOB_LIFE_INCREMENT/100))
+        incrementCreatureColorFilter()
+    }
+
+    mob.style.filter = `hue-rotate(${MOB_HUE_ROTATE}rad)`
 
     ARENA_GRIDS[pos]['mob'] = {'life': life_mob}
     ARENA_GRIDS[pos]['grid'].style.display = 'flex'
