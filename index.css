@@ -1,5 +1,8 @@
 :root {
     --width: 360px;
+    --height: 480px;
+    --shot-area-h: 60px;
+    --info-h:30px;
 }
 
 html, * {
@@ -23,11 +26,11 @@ body{
 
 .box > .info {
     width: var(--width);
+    height: var(--info-h);
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    height: 30px;
 }
 
 .info > .title {
@@ -39,9 +42,14 @@ body{
     color: white;
 }
 
+.info > .points {
+    font-size:16px;
+    color: white;
+}
+
 .box > .arena {
     width: var(--width);
-    height: 480px;
+    height: var(--height);
     background-color: rgb(55, 55, 55);
     position: relative;
     /* overflow: hidden; */
@@ -51,23 +59,169 @@ body{
 
 .box > .shot--area {
     width: 360px;
-    height: 60px;
-    background-color: azure;
+    height: var(--shot-area-h);
+    background-color: #f0ffff2b;
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
 }
 
 .shot--area > .shot--position {
     width: 40px;
     height: 40px;
     background-color: blueviolet;
-    background-image: url(https://usersnap.com/blog/wp-content/uploads/2017/04/college-study-web-development-2.png);
-    background-size: 180%;
+    background-image: url(https://gifdb.com/images/high/nerd-ginger-cat-typing-8308pf65yrgevcln.gif);
+    background-size: 160%;
     background-position: center;
     background-position-x: 60%;
     border-radius: 20px;
     z-index: 1;
+    box-shadow: 0px 0px 2px black;
+}
+
+.shot--area > .shop-btn {
+    width: 30px;
+    height: 30px;
+    background-image: url(https://www.iconpacks.net/icons/2/free-store-icon-2017-thumb.png);
+    background-size: cover;
+    position: absolute;
+    right: 10px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: .5s;
+}
+.shot--area > .shop-btn:hover {
+    transform: scale(1.2);
+    background-color: rgb(240, 208, 166);
+}
+
+.box > .shop {
+    background-color: rgb(0 0 0 / 92%);
+    position: absolute;
+    width: var(--width);
+    height: calc(var(--height) + var(--shot-area-h) + var(--info-h));
+    z-index: 1;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    top: 104px;
+}
+
+.shop > .close-shop-btn {
+    width: 20px;
+    height: 20px;
+    padding: 5px;
+    border-radius: 20px;
+    background-color: aliceblue;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: .5s;
+}
+
+.close-shop-btn:hover {
+    transform: scale(1.3);
+}
+
+.shop > .points {
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    border-bottom:1px rgb(68, 68, 68) solid;
+}
+
+.shop > .shop-list {
+    list-style: none;
+    padding: 0 40px;
+    width: 80%;
+    margin-top: 30px;
+}
+
+.shop-list > li {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    color: white;
+    padding: 5px;
+    font-size: 14px;
+    font-weight: bold;
+    border-bottom:1px rgb(68, 68, 68) solid;
+}
+
+.shop-list > li > .title {
+    flex: 1;
+}
+.shop-list > li > .action-header {
+    margin-left: 10px;
+    width: 30px;
+}
+.shop-list > li > .action {
+    margin-left: 10px;
+    width: 30px;
+    background-color: rgb(255, 255, 255);
+    padding: 2px;
+    border-radius: 2px;
+    color: black;
+    cursor: pointer;
+}
+.shop-list > li > .action:hover {
+    background-color: rgb(184, 184, 184);
+}
+
+.shop > .equipment {
+    margin-top: 50px;
+    width: 80%;
+    height: 40px;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom:1px rgb(68, 68, 68) solid;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.equipment > .extra-damage {
+    text-align: end;
+}
+
+.terminal {
+    width: var(--width);
+    /* height: 60px; */
+    background-color: rgb(17, 17, 17);
+    color: #7e7e7e;
+    font-size: 9px;
+    font-weight: bold;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden;
+}
+
+.terminal > .title {
+    height: 10px;
+    font-size: 8px;
+    font-weight: bold;
+    border-bottom: 1px solid rgb(68 68 68);
+    display: flex;
+    align-items: end;
+    padding: 2px 5px;
+}
+
+.terminal > ul {
+    height: 50px;
+    list-style: none;
+    overflow: hidden;
+    padding: 5px;
+}
+
+.terminal > ul .log-error {
+    color: #a14b4b;
 }
 
 .bullet {

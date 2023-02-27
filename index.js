@@ -5,18 +5,28 @@ MOB_LIFE=1000
 
 
 VELOCITY = 2
-VELOCITY_MODERATE = 2
-VELOCITY_HIGH = 3
-VELOCITY_INSANE = 5
 
+const VELOCITY_MODES = {
+    NORMAL: null,
+    MODARATE: {ACTIVATE: 15, ACELERATION: 2, COLOR: '#ffa000', DAMAGE: 2, POINT: 2},
+    HIGH: {ACTIVATE: 30, ACELERATION: 3, COLOR: '#e22b2b', DAMAGE: 3, POINT: 3},
+    INSANE: {ACTIVATE: 50, ACELERATION: 5, COLOR: 'white', DAMAGE: 5, POINT: 4},
+}
 
-MODERATE_VELOCITY_COLOR = '#ffa000'
-HIGH_VELOCITY_COLOR =  '#e22b2b'
-
-
-ACTIVE_MODERATE_VELOCITY = 15
-ACTIVE_HIGH_VELOCITY = 30
-ACTIVE_INSANE_VELOCITY = 50
+const PRICES = {
+    BULLET: 150,
+    EXTRA_DAMAGE: 50,
+    bulletPriceUpdate() {
+        const value = document.querySelector('li.shop-item-bullet div.value')
+        PRICES.BULLET = (PRICES.BULLET*TOTAL_BULLETS)
+        value.innerHTML = PRICES.BULLET + ' Points'
+    },
+    extraDamageUpdate() {
+        const value = document.querySelector('li.shop-item-extra-damage div.value')
+        PRICES.EXTRA_DAMAGE = (EXTRA_DAMAGE>0) ? (PRICES.EXTRA_DAMAGE*EXTRA_DAMAGE) : PRICES.EXTRA_DAMAGE
+        value.innerHTML = PRICES.EXTRA_DAMAGE + ' Points'
+    }
+}
 
 
 BULLET_DIR_X = 1 
@@ -24,9 +34,9 @@ BULLET_DIR_Y = 1
 BULLET_SIZE = 15
 BULLET_DISPLACEMENT_X = 0
 BULLET_DISPLACEMENT_Y = 1
-TOTAL_BULLETS = 3
+TOTAL_BULLETS = 1
 CURRENT_BULLETS = 0
-
+BULLET_PRICE = 50
 
 ARENA = null
 ARENA_ROWS = 6
@@ -36,12 +46,15 @@ ARENA_GRIDS = []
 
 SAFE_BOUND = 2
 MIN_DAMAGE = 50
+EXTRA_DAMAGE = 0
 
 INTERVAL=null
 LINE=null
 ANGLE=null
 
 LEVEL=1
+POINTS=0
+
 ON = false
 
 COLISION_SIDES = {
@@ -51,7 +64,90 @@ COLISION_SIDES = {
     RIGHT: 'right'
 }
 
-function createArenaGrid() {
+shop = () => {
+    const shop_box = document.querySelector('div.shop')
+    const shop_item_bullet = document.querySelector('li.shop-item-bullet')
+    const shop_item_extra_damage = document.querySelector('li.shop-item-extra-damage')
+    
+    document.querySelector('div.shop-btn').addEventListener('click', (_) => {
+        if (ON) return setLogTerminal("Não permitido durante disparo", true)
+        
+        shop_box.style.display = 'flex'
+        setLogTerminal("Acessando a lojinha")
+    })
+    document.querySelector('div.close-shop-btn').addEventListener('click', (_) => {
+        shop_box.style.display = 'none'
+        setLogTerminal("Saindo da lojinha")
+    })
+
+    shop_item_bullet.querySelector('div.action').addEventListener('click', (_) => {
+        if (POINTS > PRICES.BULLET) {
+            setLogTerminal("Comprou o item Bullet por " + PRICES.BULLET + " pontos")
+            
+            POINTS -= PRICES.BULLET
+            TOTAL_BULLETS++
+            setTotalBullets(TOTAL_BULLETS)
+
+            PRICES.bulletPriceUpdate()
+            setPoints(POINTS)
+
+        }else{
+            setLogTerminal("Pontos insuficientes para comprar o item", true)
+        }
+    })
+
+    shop_item_extra_damage.querySelector('div.action').addEventListener('click', (_) => {
+        if (POINTS > PRICES.EXTRA_DAMAGE) {
+            setLogTerminal("Comprou o item Extra Damage por " + PRICES.EXTRA_DAMAGE + " pontos")
+
+            POINTS -= PRICES.EXTRA_DAMAGE
+            EXTRA_DAMAGE++
+
+            PRICES.extraDamageUpdate()
+            setExtraDamage(EXTRA_DAMAGE)
+            setPoints(POINTS)
+        }else{
+            setLogTerminal("Pontos insuficientes para comprar o item", true)
+        }
+    })
+}
+
+const setPoints = (points) => {
+    const p = document.querySelector('div.points')
+    const p2 = document.querySelector('div.shop div.points')
+    p.innerHTML = 'Points: ' + points
+    p2.innerHTML = 'Points: ' + points
+}
+
+setExtraDamage = (ex_damage=null) => {
+    if (ex_damage!=null) EXTRA_DAMAGE = ex_damage
+    const ed = document.querySelector('div.equipment div.extra-damage')
+    ed.innerHTML = `Damage: ${Math.round((MIN_DAMAGE + EXTRA_DAMAGE)/100 * MOB_LIFE)}<br>Extra: ${EXTRA_DAMAGE}%`
+}
+
+const setTotalBullets = (total) => {
+    const total_bullet = document.querySelector('div.equipment div.bullets')
+    TOTAL_BULLETS=total
+    total_bullet.innerHTML = 'Bullets: ' + TOTAL_BULLETS
+}
+
+incrementPoints = (bullet) => {
+    if (bullet.dataset.totalColisions>=VELOCITY_MODES.MODARATE.ACTIVATE
+    && bullet.dataset.totalColisions<VELOCITY_MODES.HIGH.ACTIVATE) {
+        POINTS += VELOCITY_MODES.MODARATE.POINT
+    }else if (bullet.dataset.totalColisions>=VELOCITY_MODES.HIGH.ACTIVATE
+    && bullet.dataset.totalColisions<VELOCITY_MODES.INSANE.ACTIVATE) {
+        POINTS += VELOCITY_MODES.HIGH.POINT
+    }else if (bullet.dataset.totalColisions>=VELOCITY_MODES.INSANE.ACTIVATE) {
+        POINTS += VELOCITY_MODES.INSANE.POINT
+    }else{
+        POINTS += 1
+    }
+
+    setPoints(POINTS)
+}
+
+createArenaGrid = () => {
     const ul = document.createElement('ul')
     ul.style.margin = 0
     ul.style.padding = 0
@@ -128,9 +224,10 @@ renderBullet = (x, y) => {
     CURRENT_BULLETS++
 
     const showBullet = setInterval((_) => {
+        if (CURRENT_BULLETS>=TOTAL_BULLETS) return clearInterval(showBullet)
+        
         createBullet(x,y)
         CURRENT_BULLETS++
-        if (CURRENT_BULLETS>=TOTAL_BULLETS) clearInterval(showBullet)
     }, 200)
 }
 
@@ -145,7 +242,7 @@ function shake(pos) {
 
     const current_life =  (parseInt(life.style.width.replace('px', '')) / 100) * MOB_LIFE
 
-    const damage = (MIN_DAMAGE/100 * MOB_LIFE)
+    const damage = ((MIN_DAMAGE + EXTRA_DAMAGE)/100 * MOB_LIFE)
     const new_life = (current_life-damage)
     const new_life_percent = (new_life*100) / MOB_LIFE
     
@@ -194,7 +291,8 @@ function mobCollisionY(bullet) {
                 const calc = calculateRepositionOnColisionMob(COLISION_SIDES.TOP, i['grid'])
                 setBulletPosition(bullet, null, calc)
                 incrementColision(bullet)
-                
+                incrementPoints(bullet)
+
                 shake(i)
             }
 
@@ -206,6 +304,7 @@ function mobCollisionY(bullet) {
                 const calc = calculateRepositionOnColisionMob(COLISION_SIDES.BOTTOM, i['grid'])
                 setBulletPosition(bullet, null, calc)
                 incrementColision(bullet)
+                incrementPoints(bullet)
                 
                 shake(i)
             }
@@ -230,6 +329,7 @@ function mobCollisionX(bullet) {
                 const calc = calculateRepositionOnColisionMob(COLISION_SIDES.LEFT, i['grid'])
                 setBulletPosition(bullet, calc)
                 incrementColision(bullet)
+                incrementPoints(bullet)
                 
                 shake(i)
             }
@@ -243,6 +343,7 @@ function mobCollisionX(bullet) {
                 const calc = calculateRepositionOnColisionMob(COLISION_SIDES.RIGHT, i['grid'])
                 setBulletPosition(bullet, calc)
                 incrementColision(bullet)
+                incrementPoints(bullet)
                 
                 shake(i)
             }
@@ -256,16 +357,17 @@ function shiftBullet() {
 
     for(b of bullets) {
         let acelation = 1
-        if (b.dataset.totalColisions>=ACTIVE_MODERATE_VELOCITY) {
-            acelation = VELOCITY_MODERATE
-            setBulletColor(b, MODERATE_VELOCITY_COLOR)
+        if (b.dataset.totalColisions>=VELOCITY_MODES.MODARATE.ACTIVATE) {
+            acelation = VELOCITY_MODES.MODARATE.ACELERATION
+            setBulletColor(b, VELOCITY_MODES.MODARATE.COLOR)
         }
-        if (b.dataset.totalColisions>=ACTIVE_HIGH_VELOCITY) {
-            acelation = VELOCITY_HIGH
-            setBulletColor(b, HIGH_VELOCITY_COLOR)
+        if (b.dataset.totalColisions>=VELOCITY_MODES.HIGH.ACTIVATE) {
+            acelation = VELOCITY_MODES.HIGH.ACELERATION
+            setBulletColor(b, VELOCITY_MODES.HIGH.COLOR)
         }
-        if (b.dataset.totalColisions>=ACTIVE_INSANE_VELOCITY) {
-            acelation = VELOCITY_INSANE
+        if (b.dataset.totalColisions>=VELOCITY_MODES.INSANE.ACTIVATE) {
+            acelation = VELOCITY_MODES.INSANE.ACELERATION
+            setBulletColor(b, VELOCITY_MODES.INSANE.COLOR)
             ARENA.style.filter = 'invert(75%)'
         }
 
@@ -308,8 +410,11 @@ function arenaCollisionY(bullet, last) {
     if (bullet_rect.bottom >= arena_rect.bottom + shot_position.offsetHeight) {
         
         bullet.remove()
-    
+
         if (last<=1 && CURRENT_BULLETS>=TOTAL_BULLETS) {
+            
+            setLogTerminal("Disparo foi finalizado")
+
             ON=false
             clearInterval(INTERVAL)
             INTERVAL=null
@@ -317,6 +422,7 @@ function arenaCollisionY(bullet, last) {
             CURRENT_BULLETS=0
             levelUpdate(LEVEL)
             ARENA.style.filter = 'none'
+
         }
     }
 }
@@ -351,7 +457,6 @@ function dropCreature() {
     ARENA_GRIDS[pos]['grid'].style.flexDirection = 'column'
     ARENA_GRIDS[pos]['grid'].append(mob)
     ARENA_GRIDS[pos]['grid'].append(life)
-
 }
 
 function drawLine() {
@@ -417,6 +522,8 @@ function shoot() {
             ON = true
 
             LINE.remove()
+
+            setLogTerminal("Disparo realizado")
         }
     })
 }
@@ -424,11 +531,13 @@ function shoot() {
 function levelUpdate() {
     info = document.querySelector('div.info')
     info.querySelector('div.level').innerHTML = 'Level: ' + LEVEL
-    MIN_DAMAGE -= (MIN_DAMAGE*0.1)
+    if (LEVEL>1) MIN_DAMAGE -= (MIN_DAMAGE*0.1)
 
+    setLogTerminal("Novos bugs entraram na arena")
     dropCreature()
     dropCreature()
 
+    setExtraDamage()
     gameOver()
 }
 
@@ -442,19 +551,36 @@ function reset() {
     ARENA.innerHTML = ''
     BULLET_DIR_X = 1
     BULLET_DIR_Y = 1
+    POINTS=0
+    setPoints(POINTS)
     createArenaGrid()
     levelUpdate()
 }
 
 function gameOver() {
-    total = ARENA_GRIDS.filter(e => e.mob != null).length
+    total = ARENA_GRIDS.filter(e => e['grid'].querySelector('div') != null).length
     
     if (total>=ARENA_GRIDS.length) {
+        setLogTerminal(`O jogo acabou, você chegou ao Level: ${LEVEL}`, true)
         res = alert('Game Over')
         if (res==undefined) {
             reset()
         }
     }
+}
+
+const setLogTerminal = (log, error=false) => {
+    const ul = document.querySelector('div.terminal ul')
+    const li = document.createElement('li')
+    li.innerText = 'home/DevsAndBugs> ' + log
+    if (error) li.classList.add('log-error')
+    ul.append(li)
+    ul.scrollTo({ left: 0, top: ul.scrollHeight, behavior: "smooth" });
+}
+
+const terminalClear = () => {
+    const ul = document.querySelector('div.terminal ul')
+    ul.innerHTML = ''
 }
 
 document.addEventListener("DOMContentLoaded", (_) => {
@@ -463,10 +589,19 @@ document.addEventListener("DOMContentLoaded", (_) => {
     shot_position = document.querySelector('.shot--position')
     shot_position_rect = shot_position.getBoundingClientRect()
     
+    setLogTerminal("Novo jogo iniciado")
     
+    shop()
+    setExtraDamage(EXTRA_DAMAGE)
+    setTotalBullets(TOTAL_BULLETS)
+    setPoints(POINTS)
+    PRICES.bulletPriceUpdate()
+    PRICES.extraDamageUpdate()
+
     createArenaGrid()
     levelUpdate()
     
     drawLine()
     shoot()
+
 })
