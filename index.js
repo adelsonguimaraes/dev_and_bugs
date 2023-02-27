@@ -2,6 +2,8 @@ GRID_SIZE = 50
 GRID_PADDING = 5
 MOB_SIZE = 40
 MOB_LIFE=1000
+MOB_LIFE_INCREMENT=10
+MOB_HUE_ROTATE=0
 
 
 VELOCITY = 2
@@ -239,12 +241,14 @@ function shake(pos) {
 
 
     const life = pos['grid'].querySelector('div#life')
-
-    const current_life =  (parseInt(life.style.width.replace('px', '')) / 100) * MOB_LIFE
-
+    const mob_personal_life = pos['mob'].life
+    
+    // calc damage basead in MOB_LIFE dafault
     const damage = ((MIN_DAMAGE + EXTRA_DAMAGE)/100 * MOB_LIFE)
+    
+    const current_life =  (parseInt(life.style.width) / 100) * mob_personal_life
     const new_life = (current_life-damage)
-    const new_life_percent = (new_life*100) / MOB_LIFE
+    const new_life_percent = (new_life*100) / mob_personal_life
     
     life.style.width = new_life_percent + '%'
 
@@ -427,6 +431,20 @@ function arenaCollisionY(bullet, last) {
     }
 }
 
+setCreatureColorFilter = () => {
+    split = MOB_HUE_ROTATE + ''.split('.')
+    let dig1 = 0;
+    let dig2 = 0;
+
+    // if (split[1] != null) {
+    //     if (parseInt(split[1])<9) {
+    //         dig1
+    //     }
+    // }else{
+        
+    // }
+}
+
 function dropCreature() {
     const pos = Math.floor(Math.random() * ARENA_GRIDS.length)
     const mob = document.createElement('div')
@@ -451,7 +469,9 @@ function dropCreature() {
     life.style.backgroundColor = 'red'
     life.id = 'life'
 
-    ARENA_GRIDS[pos]['mob'] = {'health': 100}
+    const life_mob = (LEVEL>1) ? MOB_LIFE + (MOB_LIFE*MOB_LIFE_INCREMENT/100) : MOB_LIFE
+
+    ARENA_GRIDS[pos]['mob'] = {'life': life_mob}
     ARENA_GRIDS[pos]['grid'].style.display = 'flex'
     ARENA_GRIDS[pos]['grid'].style.flexDirection = 'column'
     ARENA_GRIDS[pos]['grid'].append(mob)
@@ -530,8 +550,7 @@ function shoot() {
 function levelUpdate() {
     info = document.querySelector('div.info')
     info.querySelector('div.level').innerHTML = 'Level: ' + LEVEL
-    // if (LEVEL>1) MIN_DAMAGE -= (MIN_DAMAGE*0.1)
-
+    
     setLogTerminal("Novos bugs entraram na arena")
     dropCreature()
     dropCreature()
