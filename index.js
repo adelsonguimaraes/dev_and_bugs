@@ -555,6 +555,8 @@ function reset() {
     setPoints(POINTS)
     createArenaGrid()
     levelUpdate()
+    setExtraDamage(0)
+    setTotalBullets(1)
 }
 
 function gameOver() {
