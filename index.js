@@ -429,13 +429,12 @@ function arenaCollisionY(bullet, last) {
 
 function dropCreature() {
     const pos = Math.floor(Math.random() * ARENA_GRIDS.length)
-    // pos = 13
     const mob = document.createElement('div')
     const life = document.createElement('div')
     const grid_rect = ARENA_GRIDS[pos]['grid'].getBoundingClientRect()
 
-    if (ARENA_GRIDS[pos]['grid'].querySelector('div')!=null){
-        total = ARENA_GRIDS.filter(e => e.mob != null).length
+    if (ARENA_GRIDS[pos]['grid'].querySelector('div')!=null) {
+        total = ARENA_GRIDS.filter(e => e['grid'].querySelector('div')).length
         if (total>=ARENA_GRIDS.length) return false
         return dropCreature()
     }
@@ -531,7 +530,7 @@ function shoot() {
 function levelUpdate() {
     info = document.querySelector('div.info')
     info.querySelector('div.level').innerHTML = 'Level: ' + LEVEL
-    if (LEVEL>1) MIN_DAMAGE -= (MIN_DAMAGE*0.1)
+    // if (LEVEL>1) MIN_DAMAGE -= (MIN_DAMAGE*0.1)
 
     setLogTerminal("Novos bugs entraram na arena")
     dropCreature()
@@ -560,8 +559,10 @@ function reset() {
 }
 
 function gameOver() {
-    total = ARENA_GRIDS.filter(e => e['grid'].querySelector('div') != null).length
+    total = ARENA_GRIDS.filter(e => e['grid'].querySelector('div')).length
     
+    console.log(total, ARENA_GRIDS.length);
+
     if (total>=ARENA_GRIDS.length) {
         setLogTerminal(`O jogo acabou, você chegou ao Level: ${LEVEL}`, true)
         res = alert('Game Over')
