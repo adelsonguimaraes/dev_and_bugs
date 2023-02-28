@@ -19,8 +19,15 @@ const PRICES = {
     BULLET: null,
     EXTRA_DAMAGE: null,
     reset() {
+<<<<<<< HEAD
+        this.BULLET = 150
+        this.EXTRA_DAMAGE = 50
+        this.bulletPriceUpdate()
+        this.extraDamageUpdate()
+=======
         this.BULLET = 150,
         this.EXTRA_DAMAGE = 50
+>>>>>>> 7a2f7b1a5942758395ebd7c6ddeab3cf6439556a
     },
     bulletPriceUpdate() {
         const value = document.querySelector('li.shop-item-bullet div.value')
@@ -50,7 +57,7 @@ ARENA_COLUMNS = 8
 ARENA_GRIDS = []
 
 
-SAFE_BOUND = 2
+SAFE_BOUND = 0
 MIN_DAMAGE = 20
 EXTRA_DAMAGE = 0
 
