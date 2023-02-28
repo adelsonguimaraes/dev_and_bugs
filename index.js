@@ -16,8 +16,12 @@ const VELOCITY_MODES = {
 }
 
 const PRICES = {
-    BULLET: 150,
-    EXTRA_DAMAGE: 50,
+    BULLET: null,
+    EXTRA_DAMAGE: null,
+    reset() {
+        this.BULLET = 150,
+        this.EXTRA_DAMAGE = 50
+    },
     bulletPriceUpdate() {
         const value = document.querySelector('li.shop-item-bullet div.value')
         PRICES.BULLET = (PRICES.BULLET*TOTAL_BULLETS)
@@ -605,6 +609,7 @@ function reset() {
     levelUpdate()
     setExtraDamage(0)
     setTotalBullets(1)
+    PRICES.reset()
 }
 
 function gameOver() {
@@ -642,6 +647,8 @@ document.addEventListener("DOMContentLoaded", (_) => {
     shot_position_rect = shot_position.getBoundingClientRect()
     
     setLogTerminal("Novo jogo iniciado")
+
+    PRICES.reset()
     
     shop()
     setExtraDamage(EXTRA_DAMAGE)
