@@ -47,7 +47,7 @@ ARENA_GRIDS = []
 
 
 SAFE_BOUND = 2
-MIN_DAMAGE = 50
+MIN_DAMAGE = 20
 EXTRA_DAMAGE = 0
 
 INTERVAL=null
@@ -475,6 +475,7 @@ function dropCreature() {
 
     if (LEVEL>1) {
         life_mob = (MOB_LIFE + (MOB_LIFE*MOB_LIFE_INCREMENT/100))
+        MOB_LIFE_INCREMENT+=3
         incrementCreatureColorFilter()
     }
 
@@ -561,8 +562,26 @@ function levelUpdate() {
     info.querySelector('div.level').innerHTML = 'Level: ' + LEVEL
     
     setLogTerminal("Novos bugs entraram na arena")
-    dropCreature()
-    dropCreature()
+    
+    if (LEVEL>=30 && LEVEL<50){
+        dropCreature()
+        dropCreature()
+        dropCreature()
+    }else if (LEVEL>=50 && LEVEL<100) {
+        dropCreature()
+        dropCreature()
+        dropCreature()
+        dropCreature()
+    }else if (LEVEL>=100) {
+        dropCreature()
+        dropCreature()
+        dropCreature()
+        dropCreature()
+        dropCreature()
+    }else{
+        dropCreature()
+        dropCreature()
+    }
 
     setExtraDamage()
     gameOver()
@@ -572,13 +591,15 @@ function reset() {
     LEVEL = 1
     clearInterval(INTERVAL)
     INTERVAL = null
-    MIN_DAMAGE = 50
+    MIN_DAMAGE = 20
     ARENA_GRIDS = []
     ON = false
     ARENA.innerHTML = ''
     BULLET_DIR_X = 1
     BULLET_DIR_Y = 1
     POINTS=0
+    MOB_LIFE_INCREMENT=10
+    MOB_HUE_ROTATE="0.0"
     setPoints(POINTS)
     createArenaGrid()
     levelUpdate()
