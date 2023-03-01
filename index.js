@@ -524,16 +524,24 @@ function dropCreature() {
     ARENA_GRIDS[pos]['grid'].append(life)
 }
 
+const sequenceDropCreature = (sequence) => {
+    count=0
+    while(count < sequence) {
+        dropCreature()
+        count++
+    }
+}
+
 function drawLine() {
     ARENA.addEventListener('mousemove', (e) => {
 
         if (ON) return false
 
         const arena_rect = ARENA.getBoundingClientRect()
-        const x1 = shot_position_rect.left-arena_rect.left
-        const y1 = shot_position_rect.top-arena_rect.top
-        const x2 = e.pageX-arena_rect.left
-        const y2 = e.pageY-arena_rect.top
+        const x1 = shot_position_rect.left + (shot_position_rect.width/2) - arena_rect.x
+        const y1 = shot_position_rect.top + (shot_position_rect.height/2) - arena_rect.y
+        const x2 = e.pageX-arena_rect.x
+        const y2 = e.pageY-arena_rect.y
 
         const length = Math.sqrt(Math.pow((x2-x1), 2) + Math.pow((y2 - y1), 2))
         const cx = ((x1 + x2) / 2)
@@ -547,8 +555,8 @@ function drawLine() {
         LINE.style.height = '5px'
         LINE.style.backgroundColor = 'green'
         LINE.style.position = 'absolute'
-        LINE.style.top = cy -  (LINE.offsetHeight/2) + (shot_position_rect.height/2) + 'px'
-        LINE.style.left = cx - (LINE.offsetWidth/2) + (shot_position_rect.width/2) + 'px'
+        LINE.style.top = cy -  (LINE.offsetHeight/2) + 'px'
+        LINE.style.left = cx - (LINE.offsetWidth/2) + 'px'
         LINE.style.width = length + 'px'
         LINE.style.transform = `rotate(${ANGLE}deg)`
         
@@ -593,31 +601,56 @@ function shoot() {
     })
 }
 
+const MOB_DROP_AMOUNTS = {
+    LEVEL_0: {min:0, max:30, drops: 2},
+    LEVEL_30: {min:30, max:50, drops: 3},
+    LEVEL_50: {min: 50, max:100,  drops: 4},
+    LEVEL_100: {min: 100, max:999999, drops: 5},
+    ALERTS: {
+        LEVEL_0: false,
+        LEVEL_30: false,
+        LEVEL_50: false,
+        LEVEL_100: false
+    },
+    reset() {
+        this.ALERTS.LEVEL_0 = false
+        this.ALERTS.LEVEL_30 = false
+        this.ALERTS.LEVEL_50 = false
+        this.ALERTS.LEVEL_100 = false
+    },
+    changeDrops() {
+        if (LEVEL>=this.LEVEL_0.min && LEVEL<=this.LEVEL_0.max) {
+            sequenceDropCreature(this.LEVEL_0.drops)
+            if (!this.ALERTS.LEVEL_0) setLogTerminal(`Level incial, dropando ${this.LEVEL_0.drops} bugs por level`, true)
+            this.ALERTS.LEVEL_0 = true
+        
+        }else if (LEVEL>=this.LEVEL_30.min && LEVEL<=this.LEVEL_30.max){
+            sequenceDropCreature(this.LEVEL_30.drops)
+            if (!this.ALERTS.LEVEL_30) setLogTerminal(`Level ${this.LEVEL_30.min}, dropando ${this.LEVEL_30.drops} bugs por level`, true)
+            this.ALERTS.LEVEL_30 = true
+
+        }else if (LEVEL>=this.LEVEL_50.min && LEVEL<=this.LEVEL_50.max) {
+            sequenceDropCreature(this.LEVEL_50.drops)
+            if (!this.ALERTS.LEVEL_50) setLogTerminal(`Level ${this.LEVEL_50.min}, dropando ${this.LEVEL_50.drops} bugs por level`, true)
+            this.ALERTS.LEVEL_50 = true
+        
+
+        }else if (LEVEL>=this.LEVEL_100.min && LEVEL<=this.LEVEL_100.max) {
+            sequenceDropCreature(this.LEVEL_100.drops)
+            if (!this.ALERTS.LEVEL_100) setLogTerminal(`Level ${this.LEVEL_100.min}, dropando ${this.LEVEL_100.drops} bugs por level`, true)
+            this.ALERTS.LEVEL_100 = true
+
+        }
+    }
+}
+
 function levelUpdate() {
     info = document.querySelector('div.info')
     info.querySelector('div.level').innerHTML = 'Level: ' + LEVEL
     
     setLogTerminal("Novos bugs entraram na arena")
     
-    if (LEVEL>=30 && LEVEL<50){
-        dropCreature()
-        dropCreature()
-        dropCreature()
-    }else if (LEVEL>=50 && LEVEL<100) {
-        dropCreature()
-        dropCreature()
-        dropCreature()
-        dropCreature()
-    }else if (LEVEL>=100) {
-        dropCreature()
-        dropCreature()
-        dropCreature()
-        dropCreature()
-        dropCreature()
-    }else{
-        dropCreature()
-        dropCreature()
-    }
+    MOB_DROP_AMOUNTS.changeDrops()
 
     setExtraDamage()
     gameOver()
@@ -642,13 +675,12 @@ function reset() {
     setExtraDamage(0)
     setTotalBullets(1)
     PRICES.reset()
+    MOB_DROP_AMOUNTS.reset()
 }
 
 function gameOver() {
     total = ARENA_GRIDS.filter(e => e['grid'].querySelector('div')).length
     
-    console.log(total, ARENA_GRIDS.length);
-
     if (total>=ARENA_GRIDS.length) {
         setLogTerminal(`O jogo acabou, você chegou ao Level: ${LEVEL}`, true)
         res = alert('Game Over')

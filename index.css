@@ -195,7 +195,7 @@ body{
 
 .terminal {
     width: var(--width);
-    /* height: 60px; */
+    height: 100px;
     background-color: rgb(17, 17, 17);
     color: #7e7e7e;
     font-size: 9px;
@@ -205,7 +205,7 @@ body{
 }
 
 .terminal > .title {
-    height: 10px;
+    height: 15px;
     font-size: 8px;
     font-weight: bold;
     border-bottom: 1px solid rgb(68 68 68);
@@ -215,7 +215,7 @@ body{
 }
 
 .terminal > ul {
-    height: 50px;
+    height: 80px;
     list-style: none;
     overflow: hidden;
     padding: 5px;
