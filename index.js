@@ -1,5 +1,5 @@
-GRID_SIZE = 50
-GRID_PADDING = 5
+GRID_SIZE = 60
+GRID_PADDING = 10
 MOB_SIZE = 40
 MOB_LIFE=1000
 MOB_LIFE_INCREMENT=10
@@ -261,7 +261,7 @@ function shake(pos) {
     if (new_life<=0) pos['grid'].innerHTML = ''
 }
 
-function calculateRepositionOnColisionMob(side, mob) {
+const calculateRepositionOnColisionMob = (side, mob) => {
     const mob_rect = mob.getBoundingClientRect()
     
     switch(side) {
@@ -391,6 +391,30 @@ function shiftBullet() {
     }
 }
 
+const calculateRepositionOnColisionArena = (side) => {
+    const arena_rect = ARENA.getBoundingClientRect()
+    
+    switch(side) {
+        case COLISION_SIDES.TOP: {
+            const calculation = 1
+
+            return calculation
+        }
+        // case COLISION_SIDES.BOTTOM: {
+        //     const calculation = (mob_rect.y + mob_rect.height) - arena_rect.top + BULLET_SIZE
+        //     return calculation
+        // }
+        case COLISION_SIDES.LEFT: {
+            const calculation = 1
+            return calculation
+        }
+        case COLISION_SIDES.RIGHT: {
+            const calculation = (arena_rect.width - BULLET_SIZE)
+            return calculation
+        }
+    }
+}
+
 function arenaCollisionX(bullet) {
     let bullet_rect = bullet.getBoundingClientRect()
     let arena_rect = ARENA.getBoundingClientRect()
@@ -398,9 +422,13 @@ function arenaCollisionX(bullet) {
     // colision on left or right side arena
     if (bullet_rect.left <= arena_rect.left) {
         bullet.dataset.directionX *= -1
-        incrementColision(bullet)        
+        const calc = calculateRepositionOnColisionArena(COLISION_SIDES.LEFT)
+        setBulletPosition(bullet, calc)
+        incrementColision(bullet)
     }
     if (bullet_rect.right >= arena_rect.right) {
+        const calc = calculateRepositionOnColisionArena(COLISION_SIDES.RIGHT)
+        setBulletPosition(bullet, calc)
         incrementColision(bullet)
         bullet.dataset.directionX *= -1
     }
@@ -413,6 +441,8 @@ function arenaCollisionY(bullet, last) {
     // colision on top arena
     if (bullet_rect.top <= arena_rect.top) {
         bullet.dataset.directionY *= -1
+        const calc = calculateRepositionOnColisionArena(COLISION_SIDES.TOP)
+        setBulletPosition(bullet, null, calc)
         incrementColision(bullet)
     }
 
