@@ -72,7 +72,7 @@ COLISION_SIDES = {
     RIGHT: 'right'
 }
 
-shop = () => {
+const shop = () => {
     const shop_box = document.querySelector('div.shop')
     const shop_item_bullet = document.querySelector('li.shop-item-bullet')
     const shop_item_extra_damage = document.querySelector('li.shop-item-extra-damage')
@@ -127,7 +127,7 @@ const setPoints = (points) => {
     p2.innerHTML = 'Points: ' + points
 }
 
-setExtraDamage = (ex_damage=null) => {
+const setExtraDamage = (ex_damage=null) => {
     if (ex_damage!=null) EXTRA_DAMAGE = ex_damage
     const ed = document.querySelector('div.equipment div.extra-damage')
     ed.innerHTML = `Damage: ${Math.round((MIN_DAMAGE + EXTRA_DAMAGE)/100 * MOB_LIFE)}<br>Extra: ${EXTRA_DAMAGE}%`
@@ -139,7 +139,7 @@ const setTotalBullets = (total) => {
     total_bullet.innerHTML = 'Bullets: ' + TOTAL_BULLETS
 }
 
-incrementPoints = (bullet) => {
+const incrementPoints = (bullet) => {
     if (bullet.dataset.totalColisions>=VELOCITY_MODES.MODARATE.ACTIVATE
     && bullet.dataset.totalColisions<VELOCITY_MODES.HIGH.ACTIVATE) {
         POINTS += VELOCITY_MODES.MODARATE.POINT
@@ -155,7 +155,20 @@ incrementPoints = (bullet) => {
     setPoints(POINTS)
 }
 
-createArenaGrid = () => {
+const security = () => {
+    const ul = ARENA.querySelector('ul')
+    if (ul==null) {
+        alert('Alterações externas foram identificadas no jogo e ele será reiniciado')
+        document.location.reload()
+    }
+
+    ul.innerHTML = ''
+    for(g of ARENA_GRIDS) {
+        ul.append(g['grid'])
+    }
+}
+
+const createArenaGrid = () => {
     const ul = document.createElement('ul')
     ul.style.margin = 0
     ul.style.padding = 0
@@ -204,7 +217,7 @@ createArenaGrid = () => {
     ARENA.append(ul)
 }
 
-createBullet = (x,y) => {
+const createBullet = (x,y) => {
     const bullet = document.createElement('div')
     bullet.classList.add('bullet')
     bullet.style.width = BULLET_SIZE + 'px'
@@ -238,7 +251,30 @@ const renderBullet = (x, y) => {
     }, 200)
 }
 
-function shake(pos) {
+const SOUNDS = {
+    PERFECT: 'perfect'
+}
+
+const playSound = (sound, volume = 1.0) => {
+    const audio = new Audio()
+    audio.src = `./audio/${sound}.mp3`
+    audio.volume = volume
+    audio.play()
+}
+
+const perfect = () => {
+    const bugs = ARENA_GRIDS.filter(e => e['grid'].querySelector('div'))
+
+    if (bugs.length==0) {
+        console.log('perfect');
+        playSound(SOUNDS.PERFECT, 1.0)
+        setLogTerminal(`PERFECT!!! Seus pontos foram duplicados ${POINTS}*2 = ${(POINTS*2)}`, true)
+        POINTS *= 2
+        setPoints(POINTS)
+    }
+}
+
+const shake = (pos) => {
     pos['grid'].style.animation = 'shake 0.5s'
     setTimeout(()=>{
         pos['grid'].style.animation = ''
@@ -258,6 +294,8 @@ function shake(pos) {
     life.style.width = new_life_percent + '%'
 
     if (new_life<=0) pos['grid'].innerHTML = ''
+
+    perfect()
 }
 
 const calculateRepositionOnColisionMob = (side, mob) => {
@@ -283,7 +321,7 @@ const calculateRepositionOnColisionMob = (side, mob) => {
     }
 }
 
-function mobCollisionY(bullet) {
+const mobCollisionY = (bullet) => {
     let bullet_rect = bullet.getBoundingClientRect()
 
     for(i of ARENA_GRIDS) {
@@ -322,7 +360,7 @@ function mobCollisionY(bullet) {
     }
 }
 
-function mobCollisionX(bullet) {
+const mobCollisionX = (bullet) => {
     let bullet_rect = bullet.getBoundingClientRect()
     
     for(i of ARENA_GRIDS) {
@@ -360,7 +398,7 @@ function mobCollisionX(bullet) {
     }
 }
 
-function shiftBullet() {
+const shiftBullet = () => {
     let bullets = document.querySelectorAll('div.bullet')
     bullets = Array.from(bullets)
 
@@ -414,7 +452,7 @@ const calculateRepositionOnColisionArena = (side) => {
     }
 }
 
-function arenaCollisionX(bullet) {
+const arenaCollisionX = (bullet) => {
     let bullet_rect = bullet.getBoundingClientRect()
     let arena_rect = ARENA.getBoundingClientRect()
     
@@ -433,7 +471,7 @@ function arenaCollisionX(bullet) {
     }
 }
 
-function arenaCollisionY(bullet, last) {
+const arenaCollisionY = (bullet, last) => {
     let bullet_rect = bullet.getBoundingClientRect()
     let arena_rect = ARENA.getBoundingClientRect()
 
@@ -466,7 +504,7 @@ function arenaCollisionY(bullet, last) {
     }
 }
 
-incrementCreatureColorFilter = () => {
+const incrementCreatureColorFilter = () => {
 
     split = String(MOB_HUE_ROTATE).split('.')
     let dig1 = parseInt(split[0]);
@@ -482,7 +520,7 @@ incrementCreatureColorFilter = () => {
     MOB_HUE_ROTATE = dig1 + '.' + dig2
 }
 
-function dropCreature() {
+const dropCreature = () => {
     const pos = Math.floor(Math.random() * ARENA_GRIDS.length)
     const mob = document.createElement('div')
     const life = document.createElement('div')
@@ -531,9 +569,8 @@ const sequenceDropCreature = (sequence) => {
     }
 }
 
-function drawLine() {
+const drawLine = () => {
     ARENA.addEventListener('mousemove', (e) => {
-
         if (ON) return false
 
         const arena_rect = ARENA.getBoundingClientRect()
@@ -563,15 +600,16 @@ function drawLine() {
     })
 }
 
-function setBulletPosition(b, x=null, y=null) {
+const setBulletPosition = (b, x=null, y=null) => {
     if (x!=null) b.style.left = x + 'px'
     if (y!=null) b.style.top = y + 'px'
 }
 
-function shoot() {
+const shoot = () => {
     ARENA.addEventListener('click', (e) => {
         
         if (!ON) {
+            security()
 
             let x = e.x - shot_position_rect.x - (shot_position_rect.width/2) - (BULLET_SIZE/2)
             let y = e.y - shot_position_rect.y
@@ -643,7 +681,7 @@ const MOB_DROP_AMOUNTS = {
     }
 }
 
-function levelUpdate() {
+const levelUpdate = () => {
     info = document.querySelector('div.info')
     info.querySelector('div.level').innerHTML = 'Level: ' + LEVEL
     
@@ -655,7 +693,7 @@ function levelUpdate() {
     gameOver()
 }
 
-function reset() {
+const reset = () => {
     LEVEL = 1
     clearInterval(INTERVAL)
     INTERVAL = null
@@ -677,7 +715,7 @@ function reset() {
     MOB_DROP_AMOUNTS.reset()
 }
 
-function gameOver() {
+const gameOver = () => {
     total = ARENA_GRIDS.filter(e => e['grid'].querySelector('div')).length
     
     if (total>=ARENA_GRIDS.length) {
