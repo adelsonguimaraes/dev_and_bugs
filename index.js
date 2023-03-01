@@ -8,6 +8,53 @@ MOB_HUE_ROTATE="0.0"
 
 VELOCITY = 2
 
+const MOB_EFFECTS = {
+    PHANTOM: 'phantom',
+    phantomEffect(mob) {
+        if (mob.dataset.effectActive==String(false) && (LEVEL % 2) == 0) {
+            mob.style.opacity = '0.1'
+            mob.dataset.effectActive = true
+        }else{
+            mob.style.opacity = '1'
+            mob.dataset.effectActive = false
+        }
+    },
+    applyEffect() {
+        const grids = ARENA_GRIDS.filter(e => e['grid'].querySelector('div'))
+        
+        for(e of grids) {
+            const mob = e['grid'].querySelector('div')
+
+            if (mob.dataset.effect!=null) {
+                switch(mob.dataset.effect) {
+                    case this.PHANTOM: {
+                        this.phantomEffect(mob)
+                        break
+                    }
+                }
+            }
+        }
+    }
+}
+const MOBS = [
+    {
+        NAME: 'Demon',
+        IMG: 'https://media.tenor.com/gFvc0poigIYAAAAM/demon-red.gif',
+        COLISIONS: {LEFT: true, RIGHT: true, TOP: true, BOTTOM: true},
+        EFFECT: null,
+        LEVEL: 0,
+        RAFFLE: {MIN: 0, MAX: 100}
+    },
+    {
+        NAME: 'Bat',
+        IMG: 'https://i.gifer.com/origin/ce/ce1c245954005ac923e3cea5f70518df_w200.gif',
+        COLISIONS: {LEFT: true, RIGHT: true, TOP: true, BOTTOM: true},
+        EFFECT: MOB_EFFECTS.PHANTOM,
+        LEVEL: 10,
+        RAFFLE: {MIN: 0, MAX: 100}
+    },
+]
+
 const VELOCITY_MODES = {
     NORMAL: null,
     MODARATE: {ACTIVATE: 15, ACELERATION: 2, COLOR: '#ffa000', DAMAGE: 2, POINT: 2},
@@ -268,20 +315,22 @@ const perfect = () => {
     if (bugs.length==0) {
         console.log('perfect');
         playSound(SOUNDS.PERFECT, 1.0)
-        setLogTerminal(`PERFECT!!! Seus pontos foram duplicados ${POINTS}*2 = ${(POINTS*2)}`, true)
+        setLogTerminal(`PERFECT!!! Pontos duplicados ${POINTS}*2 = ${(POINTS*2)}`, true)
         POINTS *= 2
         setPoints(POINTS)
     }
 }
 
 const shake = (pos) => {
-    pos['grid'].style.animation = 'shake 0.5s'
+    const mob = pos['grid']
+
+    mob.style.animation = 'shake 0.5s'
     setTimeout(()=>{
-        pos['grid'].style.animation = ''
+        mob.style.animation = ''
     }, 300)
 
-
-    const life = pos['grid'].querySelector('div#life')
+    
+    const life = mob.querySelector('div#life')
     const mob_personal_life = pos['mob'].life
     
     // calc damage basead in MOB_LIFE dafault
@@ -293,9 +342,10 @@ const shake = (pos) => {
     
     life.style.width = new_life_percent + '%'
 
-    if (new_life<=0) pos['grid'].innerHTML = ''
-
-    perfect()
+    if (new_life<=0) {
+        mob.innerHTML = ''
+        perfect()
+    }
 }
 
 const calculateRepositionOnColisionMob = (side, mob) => {
@@ -327,7 +377,7 @@ const mobCollisionY = (bullet) => {
     for(i of ARENA_GRIDS) {
         const mob = i['grid'].querySelector('div')
         
-        if (mob!=null) {
+        if (mob!=null && mob.dataset.effectActive==String(false)) {
             const mob_rect = i['grid'].getBoundingClientRect()
 
             // in top
@@ -365,7 +415,7 @@ const mobCollisionX = (bullet) => {
     
     for(i of ARENA_GRIDS) {
         const mob = i['grid'].querySelector('div')
-        if (mob!=null) {
+        if (mob!=null && mob.dataset.effectActive==String(false)) {
             const mob_rect = i['grid'].getBoundingClientRect()
 
             // in left
@@ -520,6 +570,13 @@ const incrementCreatureColorFilter = () => {
     MOB_HUE_ROTATE = dig1 + '.' + dig2
 }
 
+const mobRaffle = () => {
+    let r = Math.floor(Math.random() * 100)
+    fitMobs = MOBS.filter(m => (+r >= +m.RAFFLE.MIN) && (+r <= +m.RAFFLE.MAX) && (+LEVEL >= m.LEVEL))
+    r = Math.floor(Math.random()*fitMobs.length)
+    return MOBS[r]
+}
+
 const dropCreature = () => {
     const pos = Math.floor(Math.random() * ARENA_GRIDS.length)
     const mob = document.createElement('div')
@@ -532,12 +589,16 @@ const dropCreature = () => {
         return dropCreature()
     }
 
+    mob_raffle = mobRaffle()
+
     mob.style.left = grid_rect.left + 'px'
     mob.style.width = MOB_SIZE + 'px'
     mob.style.height = MOB_SIZE + 'px'
     mob.style.backgroundColor = 'yellow'
     mob.style.backgroundSize = 'cover'
-    mob.style.backgroundImage = 'url(https://media.tenor.com/gFvc0poigIYAAAAM/demon-red.gif)'
+    mob.style.backgroundImage = `url(${mob_raffle.IMG})`
+    mob.dataset.effect = mob_raffle.EFFECT
+    mob.dataset.effectActive = false
     
     life.style.width = 100 + '%'
     life.style.height = 6 + 'px'
@@ -688,6 +749,7 @@ const levelUpdate = () => {
     setLogTerminal("Novos bugs entraram na arena")
     
     MOB_DROP_AMOUNTS.changeDrops()
+    MOB_EFFECTS.applyEffect()
 
     setExtraDamage()
     gameOver()
