@@ -224,10 +224,9 @@ createBullet = (x,y) => {
 setBulletColor = (bullet, color) => bullet.style.backgroundColor = color
 incrementColision = (bullet) => bullet.dataset.totalColisions++
 
-renderBullet = (x, y) => {
+const renderBullet = (x, y) => {
     CURRENT_BULLETS=0
     
-
     createBullet(x,y)
     CURRENT_BULLETS++
 
@@ -574,7 +573,7 @@ function shoot() {
         
         if (!ON) {
 
-            let x = e.x - shot_position_rect.x
+            let x = e.x - shot_position_rect.x - (shot_position_rect.width/2) - (BULLET_SIZE/2)
             let y = e.y - shot_position_rect.y
 
             let l = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2))
@@ -582,8 +581,8 @@ function shoot() {
             x = (x / l)
             y = (y / l)
 
-            const bx = (shot_position_rect.x + shot_position_rect.width/2 - BULLET_SIZE/2 - arena_rect.x)
-            const by =   (shot_position_rect.y - arena_rect.y)
+            const bx = (shot_position_rect.x + (shot_position_rect.width/2) - (BULLET_SIZE/2) - arena_rect.x)
+            const by =  (shot_position_rect.y - arena_rect.y)
             
             renderBullet(bx, by)
 
