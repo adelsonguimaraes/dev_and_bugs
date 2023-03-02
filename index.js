@@ -1,3 +1,76 @@
+const MOVEMENT_PLAYER_CONTROLLER = {
+    PLAYER_MOVIMENT_LIMITATION: 60,
+    PLAYERS_CURRENT_MOVEMENT: 0,
+    ON: false,
+    SOUND_ON: null,
+    reset() {
+        this.PLAYERS_CURRENT_MOVEMENT = 0
+        this.updateMovimentBar()
+        this.ON = false
+    },
+    updateMovimentBar () {
+        const bar = document.querySelector('div.movement-bar')
+        const percent = (this.PLAYER_MOVIMENT_LIMITATION-this.PLAYERS_CURRENT_MOVEMENT) * 100 / this.PLAYER_MOVIMENT_LIMITATION
+        bar.style.width = percent + '%'
+        this.ON = true
+        if (LINE!=null) LINE.remove()
+    },
+    startSoundEffect() {
+        if (this.SOUND_ON==null) {
+            this.SOUND_ON = playSound('movement', 1.0)
+            setTimeout(() => this.stopSoundEffect(), 1000);
+        }
+    },
+    stopSoundEffect() {
+        if (this.SOUND_ON!=null) {
+            this.SOUND_ON.pause()
+            this.SOUND_ON=null
+        }
+    },
+    stopAtLimit() {
+        const spr = shot_position.getBoundingClientRect()
+        const ar = document.querySelector('div.arena').getBoundingClientRect()
+        const l = ((spr.left + spr.width) >= ar.right)
+        const r = (spr.left <= ar.left)
+
+        if (l || r) {
+            this.stopSoundEffect()
+            setLogTerminal('Chegou no limite da área de tiro', true)
+            return false
+        }
+        return true
+    },
+    movePlayer() {
+        document.addEventListener('keydown', (e) => {
+            const shot_position = document.querySelector('div.shot--position')
+            
+            if (this.PLAYERS_CURRENT_MOVEMENT >= this.PLAYER_MOVIMENT_LIMITATION) {
+                this.stopSoundEffect()
+                return setLogTerminal('Seu limite de movimento foi atingido', true)
+            }
+            if (ON) return setLogTerminal('Não pode ser movimentar durante o disparo', true)
+    
+            if (e.code==='ArrowRight' && this.stopAtLimit()) {
+                shot_position.style.left = parseFloat(shot_position.style.left) + 1 + 'px'
+                shot_position.style.transform = "scaleX(1)"
+                this.PLAYERS_CURRENT_MOVEMENT++
+                this.updateMovimentBar()
+                this.startSoundEffect()
+            }
+            if (e.code==='ArrowLeft' && this.stopAtLimit()) {
+                shot_position.style.left = parseFloat(shot_position.style.left) - 1 + 'px'
+                shot_position.style.transform = "scaleX(-1)"
+                this.PLAYERS_CURRENT_MOVEMENT++
+                this.updateMovimentBar()
+                this.startSoundEffect()
+            }
+        })
+        document.addEventListener('keyup', (e) => {
+            if (e.code==='ArrowRight' || e.code==='ArrowLeft') this.ON = false
+        })
+    }
+}
+
 GRID_SIZE = 60
 GRID_PADDING = 10
 MOB_SIZE = 40
@@ -541,22 +614,21 @@ const arenaCollisionY = (bullet) => {
     // colision on bottom arena
     if (bullet_rect.bottom >= arena_rect.bottom + shot_position.offsetHeight) {
         const total_bullets_display = getTotalDisplayBullets()
-
+        
         bullet.remove()
         
         if (total_bullets_display<=1 && CURRENT_BULLETS>=TOTAL_BULLETS) {
             
             setLogTerminal("Disparo foi finalizado")
             
-            removeAllBullets()
-            ON=false
+            ON = false
             clearInterval(INTERVAL)
             INTERVAL=null
             LEVEL++
-            CURRENT_BULLETS=0
             levelUpdate(LEVEL)
             ARENA.style.filter = 'none'
-
+            MOVEMENT_PLAYER_CONTROLLER.reset()
+            removeAllBullets()
         }
     }
 }
@@ -652,10 +724,13 @@ const createTestElement = (x, y) => {
 const drawLine = () => {
     ARENA.addEventListener('mousemove', (e) => {
         if (ON) return false
+        if (MOVEMENT_PLAYER_CONTROLLER.ON) return false
+
+        const spr = document.querySelector('div.shot--position').getBoundingClientRect()
 
         const arena_rect = ARENA.getBoundingClientRect()
-        const x1 = shot_position_rect.left + (shot_position_rect.width/2) - arena_rect.x
-        const y1 = shot_position_rect.top + (shot_position_rect.height/2) - arena_rect.y
+        const x1 = spr.left + (spr.width/2) - arena_rect.x
+        const y1 = spr.top + (spr.height/2) - arena_rect.y
         const x2 = e.pageX-arena_rect.x
         const y2 = e.pageY-arena_rect.y
 
@@ -665,8 +740,8 @@ const drawLine = () => {
         const cx = ((x1 + x2) / 2)
         const cy = ((y1 + y2) / 2)
         
-        const bx = (shot_position_rect.x + (shot_position_rect.width/2) - (BULLET_SIZE/2) - arena_rect.x)
-        const by =  (shot_position_rect.y - arena_rect.y)
+        const bx = (spr.x + (spr.width/2) - (BULLET_SIZE/2) - arena_rect.x)
+        const by =  (spr.y - arena_rect.y)
 
         ANGLE = Math.atan2((y1-y2), (x1-x2))*(180/Math.PI)
         
@@ -695,17 +770,20 @@ const shoot = () => {
         
         if (!ON) {
             security()
+            removeAllBullets()
 
-            let x = e.x - shot_position_rect.x - (shot_position_rect.width/2) - (BULLET_SIZE/2)
-            let y = e.y - shot_position_rect.y - (shot_position_rect.height/2) - (BULLET_SIZE/2)
+            const spr = document.querySelector('div.shot--position').getBoundingClientRect()
+
+            let x = e.x - spr.x - (spr.width/2) - (BULLET_SIZE/2)
+            let y = e.y - spr.y - (spr.height/2) - (BULLET_SIZE/2)
 
             let l = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2))
 
             x = (x / l)
             y = (y / l)
 
-            const bx = (shot_position_rect.x + (shot_position_rect.width/2) - (BULLET_SIZE/2) - arena_rect.x)
-            const by =  (shot_position_rect.y - arena_rect.y)
+            const bx = (spr.x + (spr.width/2) - (BULLET_SIZE/2) - arena_rect.x)
+            const by =  (spr.y - arena_rect.y)
             
             renderBullet(bx, by)
 
@@ -846,7 +924,12 @@ const startTheme = () => {
     })
 }
 
+const initShootPosition = () => document.querySelector('div.shot--position').style.left = '160px'
+
 document.addEventListener("DOMContentLoaded", (_) => {
+    initShootPosition()
+    MOVEMENT_PLAYER_CONTROLLER.reset()
+    MOVEMENT_PLAYER_CONTROLLER.movePlayer()
     startTheme()
 
     ARENA = document.querySelector('.arena')
