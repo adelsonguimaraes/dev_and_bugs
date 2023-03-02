@@ -136,7 +136,7 @@ const shop = () => {
     })
 
     shop_item_bullet.querySelector('div.action').addEventListener('click', (_) => {
-        if (POINTS > PRICES.BULLET) {
+        if (POINTS >= PRICES.BULLET) {
             setLogTerminal("Comprou o item Bullet por " + PRICES.BULLET + " pontos")
             
             POINTS -= PRICES.BULLET
@@ -152,7 +152,7 @@ const shop = () => {
     })
 
     shop_item_extra_damage.querySelector('div.action').addEventListener('click', (_) => {
-        if (POINTS > PRICES.EXTRA_DAMAGE) {
+        if (POINTS >= PRICES.EXTRA_DAMAGE) {
             setLogTerminal("Comprou o item Extra Damage por " + PRICES.EXTRA_DAMAGE + " pontos")
 
             POINTS -= PRICES.EXTRA_DAMAGE
