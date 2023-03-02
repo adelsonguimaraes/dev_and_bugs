@@ -6,7 +6,7 @@ MOB_LIFE_INCREMENT=10
 MOB_HUE_ROTATE="0.0"
 
 
-VELOCITY = 2
+VELOCITY = 3
 
 const MOB_EFFECTS = {
     PHANTOM: 'phantom',
@@ -281,8 +281,8 @@ const createBullet = (x,y) => {
     ARENA.append(bullet)  
 }
 
-setBulletColor = (bullet, color) => bullet.style.backgroundColor = color
-incrementColision = (bullet) => bullet.dataset.totalColisions++
+const setBulletColor = (bullet, color) => bullet.style.backgroundColor = color
+const incrementColision = (bullet) => bullet.dataset.totalColisions++
 
 const renderBullet = (x, y) => {
     CURRENT_BULLETS=0
@@ -450,6 +450,9 @@ const mobCollisionX = (bullet) => {
     }
 }
 
+const getTotalDisplayBullets = () =>document.querySelectorAll('div.bullet').length
+const removeAllBullets = () => document.querySelectorAll('div.bullet').forEach(e => e.remove())
+
 const shiftBullet = () => {
     let bullets = document.querySelectorAll('div.bullet')
     bullets = Array.from(bullets)
@@ -474,7 +477,7 @@ const shiftBullet = () => {
         b.style.top = (parseFloat(b.style.top) + BULLET_DISPLACEMENT_Y*b.dataset.directionY*acelation) + 'px'
 
         arenaCollisionX(b)
-        arenaCollisionY(b, bullets.length)
+        arenaCollisionY(b)
         mobCollisionX(b)
         mobCollisionY(b)
     }
@@ -523,7 +526,7 @@ const arenaCollisionX = (bullet) => {
     }
 }
 
-const arenaCollisionY = (bullet, last) => {
+const arenaCollisionY = (bullet) => {
     let bullet_rect = bullet.getBoundingClientRect()
     let arena_rect = ARENA.getBoundingClientRect()
 
@@ -537,13 +540,15 @@ const arenaCollisionY = (bullet, last) => {
 
     // colision on bottom arena
     if (bullet_rect.bottom >= arena_rect.bottom + shot_position.offsetHeight) {
-        
-        bullet.remove()
+        const total_bullets_display = getTotalDisplayBullets()
 
-        if (last<=1 && CURRENT_BULLETS>=TOTAL_BULLETS) {
+        bullet.remove()
+        
+        if (total_bullets_display<=1 && CURRENT_BULLETS>=TOTAL_BULLETS) {
             
             setLogTerminal("Disparo foi finalizado")
-
+            
+            removeAllBullets()
             ON=false
             clearInterval(INTERVAL)
             INTERVAL=null
