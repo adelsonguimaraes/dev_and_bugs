@@ -51,7 +51,7 @@ const MOBS = [
         COLISIONS: {LEFT: true, RIGHT: true, TOP: true, BOTTOM: true},
         EFFECT: MOB_EFFECTS.PHANTOM,
         LEVEL: 10,
-        RAFFLE: {MIN: 0, MAX: 100}
+        RAFFLE: {MIN: 20, MAX: 30}
     },
 ]
 
@@ -299,21 +299,23 @@ const renderBullet = (x, y) => {
 }
 
 const SOUNDS = {
+    THEME: 'theme',
     PERFECT: 'perfect'
 }
 
-const playSound = (sound, volume = 1.0) => {
+const playSound = (sound, volume = 1.0, repeat = false) => {
     const audio = new Audio()
     audio.src = `./audio/${sound}.mp3`
     audio.volume = volume
+    audio.loop = repeat
     audio.play()
+    return audio
 }
 
 const perfect = () => {
     const bugs = ARENA_GRIDS.filter(e => e['grid'].querySelector('div'))
 
     if (bugs.length==0) {
-        console.log('perfect');
         playSound(SOUNDS.PERFECT, 1.0)
         setLogTerminal(`PERFECT!!! Pontos duplicados ${POINTS}*2 = ${(POINTS*2)}`, true)
         POINTS *= 2
@@ -324,9 +326,9 @@ const perfect = () => {
 const shake = (pos) => {
     const mob = pos['grid']
 
-    mob.style.animation = 'shake 0.5s'
+    mob.querySelector('div').style.animation = 'shake 0.5s'
     setTimeout(()=>{
-        mob.style.animation = ''
+        if (mob.querySelector('div')!=null) mob.querySelector('div').style.animation = ''
     }, 300)
 
     
@@ -353,19 +355,19 @@ const calculateRepositionOnColisionMob = (side, mob) => {
     
     switch(side) {
         case COLISION_SIDES.TOP: {
-            const calculation = (mob_rect.y - arena_rect.top - BULLET_SIZE)
+            const calculation = (mob_rect.y - arena_rect.top - BULLET_SIZE - 1)
             return calculation
         }
         case COLISION_SIDES.BOTTOM: {
-            const calculation = (mob_rect.y + mob_rect.height) - arena_rect.top + BULLET_SIZE
+            const calculation = (mob_rect.y + mob_rect.height) - arena_rect.top + 1 //+ BULLET_SIZE
             return calculation
         }
         case COLISION_SIDES.LEFT: {
-            const calculation = (mob_rect.x - arena_rect.left - BULLET_SIZE)
+            const calculation = (mob_rect.x - arena_rect.left - BULLET_SIZE - 1)
             return calculation
         }
         case COLISION_SIDES.RIGHT: {
-            const calculation = (mob_rect.x + mob_rect.width) - arena_rect.left + BULLET_SIZE
+            const calculation = (mob_rect.x + mob_rect.width) - arena_rect.left + 1 //+ BULLET_SIZE
             return calculation
         }
     }
@@ -630,6 +632,18 @@ const sequenceDropCreature = (sequence) => {
     }
 }
 
+const createTestElement = (x, y) => {
+    const teste = document.createElement('div')
+    teste.style.width = '10px'
+    teste.style.height = '10px'
+    teste.style.backgroundColor = 'red'
+    teste.style.left = x + 'px' ?? 0
+    teste.style.top = y + 'px' ?? 0
+    teste.style.position = 'absolute'
+
+    ARENA.append(teste)
+}
+
 const drawLine = () => {
     ARENA.addEventListener('mousemove', (e) => {
         if (ON) return false
@@ -641,18 +655,23 @@ const drawLine = () => {
         const y2 = e.pageY-arena_rect.y
 
         const length = Math.sqrt(Math.pow((x2-x1), 2) + Math.pow((y2 - y1), 2))
+        
+
         const cx = ((x1 + x2) / 2)
         const cy = ((y1 + y2) / 2)
+        
+        const bx = (shot_position_rect.x + (shot_position_rect.width/2) - (BULLET_SIZE/2) - arena_rect.x)
+        const by =  (shot_position_rect.y - arena_rect.y)
 
         ANGLE = Math.atan2((y1-y2), (x1-x2))*(180/Math.PI)
-
+        
         LINE = document.querySelector('div#line') ?? document.createElement('div')
         LINE.id = 'line'
         LINE.style.color = 'green'
         LINE.style.height = '5px'
         LINE.style.backgroundColor = 'green'
         LINE.style.position = 'absolute'
-        LINE.style.top = cy -  (LINE.offsetHeight/2) + 'px'
+        LINE.style.top =  cy -  (LINE.offsetHeight/2) + 'px'
         LINE.style.left = cx - (LINE.offsetWidth/2) + 'px'
         LINE.style.width = length + 'px'
         LINE.style.transform = `rotate(${ANGLE}deg)`
@@ -673,7 +692,7 @@ const shoot = () => {
             security()
 
             let x = e.x - shot_position_rect.x - (shot_position_rect.width/2) - (BULLET_SIZE/2)
-            let y = e.y - shot_position_rect.y
+            let y = e.y - shot_position_rect.y - (shot_position_rect.height/2) - (BULLET_SIZE/2)
 
             let l = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2))
 
@@ -803,7 +822,28 @@ const terminalClear = () => {
     ul.innerHTML = ''
 }
 
+THEME_ON = null
+const startTheme = () => {
+    const btn = document.querySelector('div.shot--area > div.play-stop-music')
+    btn.addEventListener('click', (_) => {
+        if (THEME_ON!=null) {
+            if (THEME_ON.paused) {
+                THEME_ON.play()
+                return setLogTerminal('Música tocando', true);
+            } else{
+                THEME_ON.pause()
+                setLogTerminal('Música em pausa', true);
+            }
+            return 
+        }
+        THEME_ON=playSound(SOUNDS.THEME, 0.2, true)
+        setLogTerminal('Música do jogo iniciada, aproveite.', true);
+    })
+}
+
 document.addEventListener("DOMContentLoaded", (_) => {
+    startTheme()
+
     ARENA = document.querySelector('.arena')
     arena_rect = ARENA.getBoundingClientRect()
     shot_position = document.querySelector('.shot--position')

@@ -17,7 +17,7 @@ body{
 }
 .box {
     width: 100%;
-    height: 100vh;
+    /* height: 100vh; */
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -55,7 +55,8 @@ body{
     position: relative;
     /* overflow: hidden; */
     cursor: none;
-    
+    max-width: var(--width);
+    max-height: var(--height);
 }
 
 .box > .shot--area {
@@ -95,6 +96,25 @@ body{
 .shot--area > .shop-btn:hover {
     transform: scale(1.2);
     background-color: rgb(240, 208, 166);
+}
+
+.shot--area > .play-stop-music {
+    position: absolute;
+    left: 15px ;
+    top: 15px;
+    height: 30px;
+    width: 30px;
+    border-radius: 20px;
+    background-image: url(https://cdn5.vectorstock.com/i/1000x1000/25/19/volume-icon-and-mute-icon-a-set-of-musical-note-vector-42472519.jpg);
+    background-position-x: 0px;
+    background-position-y: -16px;
+    background-size: 300%;
+    background-repeat: no-repeat;
+    cursor: pointer;
+    transition: .5s;
+}
+.shot--area > .play-stop-music:hover {
+    transform: scale(1.2);
 }
 
 .box > .shop {
@@ -201,7 +221,7 @@ body{
     font-size: 9px;
     font-weight: bold;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    overflow: hidden;
+    /* overflow: hidden; */
 }
 
 .terminal > .title {
