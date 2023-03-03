@@ -8,6 +8,11 @@ const MOVEMENT_PLAYER_CONTROLLER = {
         this.updateMovimentBar()
         this.ON = false
     },
+    restarPositionPlayer() {
+        const shot_position = document.querySelector('div.shot--position')
+        shot_position.style.left = '160px';
+        shot_position.style.transform = 'scaleX(1)';
+    },
     updateMovimentBar () {
         const bar = document.querySelector('div.movement-bar')
         const percent = (this.PLAYER_MOVIMENT_LIMITATION-this.PLAYERS_CURRENT_MOVEMENT) * 100 / this.PLAYER_MOVIMENT_LIMITATION
@@ -17,7 +22,7 @@ const MOVEMENT_PLAYER_CONTROLLER = {
     },
     startSoundEffect() {
         if (this.SOUND_ON==null) {
-            this.SOUND_ON = playSound('movement', 1.0)
+            this.SOUND_ON = playSound(SOUNDS.MOVEMENT, 1.0)
             setTimeout(() => this.stopSoundEffect(), 1000);
         }
     },
@@ -28,6 +33,7 @@ const MOVEMENT_PLAYER_CONTROLLER = {
         }
     },
     stopAtLimit() {
+        const shot_position = document.querySelector('div.shot--position')
         const spr = shot_position.getBoundingClientRect()
         const ar = document.querySelector('div.arena').getBoundingClientRect()
         const l = ((spr.left + spr.width) >= ar.right)
@@ -70,6 +76,7 @@ const MOVEMENT_PLAYER_CONTROLLER = {
         })
     }
 }
+
 
 GRID_SIZE = 60
 GRID_PADDING = 10
@@ -362,18 +369,25 @@ const renderBullet = (x, y) => {
     
     createBullet(x,y)
     CURRENT_BULLETS++
+    const a = playSound(SOUNDS.SHOOT, 1.0)
 
     const showBullet = setInterval((_) => {
         if (CURRENT_BULLETS>=TOTAL_BULLETS) return clearInterval(showBullet)
         
         createBullet(x,y)
         CURRENT_BULLETS++
+        const a = playSound(SOUNDS.SHOOT, 1.0)
     }, 200)
 }
 
 const SOUNDS = {
     THEME: 'theme',
-    PERFECT: 'perfect'
+    PERFECT: 'perfect',
+    MOVEMENT: 'movement',
+    SHOOT: 'shoot',
+    SHOOT_COLISION: 'shoot_colision',
+    SHOOT_COLISION_ARENA: 'shoot_colision_arena',
+    BUG_FINISH: 'bug_finish'
 }
 
 const playSound = (sound, volume = 1.0, repeat = false) => {
@@ -420,6 +434,9 @@ const shake = (pos) => {
     if (new_life<=0) {
         mob.innerHTML = ''
         perfect()
+        playSound(SOUNDS.BUG_FINISH, 1.0)
+    }else{
+        playSound(SOUNDS.SHOOT_COLISION, 1.0)
     }
 }
 
@@ -590,12 +607,14 @@ const arenaCollisionX = (bullet) => {
         const calc = calculateRepositionOnColisionArena(COLISION_SIDES.LEFT)
         setBulletPosition(bullet, calc)
         incrementColision(bullet)
+        playSound(SOUNDS.SHOOT_COLISION_ARENA, 1.0)
     }
     if (bullet_rect.right >= arena_rect.right) {
         const calc = calculateRepositionOnColisionArena(COLISION_SIDES.RIGHT)
         setBulletPosition(bullet, calc)
         incrementColision(bullet)
         bullet.dataset.directionX *= -1
+        playSound(SOUNDS.SHOOT_COLISION_ARENA, 1.0)
     }
 }
 
@@ -609,6 +628,7 @@ const arenaCollisionY = (bullet) => {
         const calc = calculateRepositionOnColisionArena(COLISION_SIDES.TOP)
         setBulletPosition(bullet, null, calc)
         incrementColision(bullet)
+        playSound(SOUNDS.SHOOT_COLISION_ARENA, 1.0)
     }
 
     // colision on bottom arena
@@ -771,7 +791,6 @@ const shoot = () => {
         if (!ON) {
             security()
             removeAllBullets()
-
             const spr = document.querySelector('div.shot--position').getBoundingClientRect()
 
             let x = e.x - spr.x - (spr.width/2) - (BULLET_SIZE/2)
@@ -877,6 +896,7 @@ const reset = () => {
     setTotalBullets(1)
     PRICES.reset()
     MOB_DROP_AMOUNTS.reset()
+    MOVEMENT_PLAYER_CONTROLLER.restarPositionPlayer()
 }
 
 const gameOver = () => {
@@ -919,7 +939,7 @@ const startTheme = () => {
             }
             return 
         }
-        THEME_ON=playSound(SOUNDS.THEME, 0.2, true)
+        THEME_ON=playSound(SOUNDS.THEME, 0.05, true)
         setLogTerminal('Música do jogo iniciada, aproveite.', true);
     })
 }
