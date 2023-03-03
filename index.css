@@ -133,6 +133,25 @@ body{
     transform: scale(1.2);
 }
 
+.shot--area > .btn-reset-game {
+    height: 30px;
+    width: 30px;
+    background-image: url(https://static.vecteezy.com/system/resources/thumbnails/005/730/956/small/refresh-reload-isolated-flat-web-mobile-icon-sign-symbol-button-element-silhouette-vector.jpg);
+    position: absolute;
+    right: -35px;
+    bottom: -35px;
+    cursor: pointer;
+    border-radius: 20px;
+    background-position-x: -9px;
+    background-position-y: -4px;
+    background-repeat: no-repeat;
+    background-size: 165%;
+    transition: .5s;
+}
+.shot--area > .btn-reset-game:hover {
+    transform: scale(1.2);
+}
+
 .shop {
     background-color: rgb(0 0 0 / 92%);
     position: fixed;

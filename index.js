@@ -1,3 +1,34 @@
+const SYSTEM_CONTROLLER = {
+    reset() {
+        const btn_reset = document.querySelector('div.btn-reset-game')
+        btn_reset.addEventListener('click', (_) => {
+            const res = window.confirm('Deseja reiniciar o jogo?')
+            if (res) {
+                reset()
+                setLogTerminal('O jogo foi reiniciado pelo usuário', true)
+            }
+        })
+    }
+}
+
+const CRITICAL_CONTROLLER = {
+    PROBABILITY: 1,
+    MULTIPLIER_FACTOR: 3,
+    tryCritical(extra_damage) {
+        const random = Math.floor(Math.random() * 100)
+        const probablity = (this.PROBABILITY + extra_damage)
+        
+        if (random <= probablity) {
+            setLogTerminal(`CRITICAL!!! O dano foi multiplicado ${this.MULTIPLIER_FACTOR}x`, true)
+            return this.MULTIPLIER_FACTOR
+        }
+        return 0
+    },
+    criticalLog(damage) {
+        setLogTerminal(`CRITICAL!!! ${Math.floor(damage)}x${Math.floor(this.MULTIPLIER_FACTOR)} = ${Math.floor(damage*this.MULTIPLIER_FACTOR)}`, true)
+    }
+}
+
 const MOVEMENT_PLAYER_CONTROLLER = {
     PLAYER_MOVIMENT_LIMITATION: 60,
     PLAYERS_CURRENT_MOVEMENT: 0,
@@ -32,7 +63,7 @@ const MOVEMENT_PLAYER_CONTROLLER = {
             this.SOUND_ON=null
         }
     },
-    stopAtLimitLeft() {
+    stopAtLimitLeft() { 
         const shot_position = document.querySelector('div.shot--position')
         const spr = shot_position.getBoundingClientRect()
         const ar = document.querySelector('div.arena').getBoundingClientRect()
@@ -93,9 +124,9 @@ const MOVEMENT_PLAYER_CONTROLLER = {
 GRID_SIZE = 60
 GRID_PADDING = 10
 MOB_SIZE = 40
-MOB_LIFE=1000
-MOB_LIFE_INCREMENT=5
-MOB_HUE_ROTATE="0.0"
+MOB_LIFE = 1000
+MOB_LIFE_INCREMENT = 3
+MOB_HUE_ROTATE = "0.0"
 
 
 VELOCITY = 3
@@ -109,42 +140,49 @@ const MOB_EFFECTS = {
         COLISION: 'colision'
     },
     EVENT: null,
-    phantomEffect(mob) {
-        if (this.EVENT == this.EVENTS.LEVEL_UP) {
-            if (mob.dataset.effectActive==String(false) && (LEVEL % 2) == 0) {
-                mob.style.opacity = '0.1'
-                mob.dataset.effectActive = true
-            }else{
-                mob.style.opacity = '1'
-                mob.dataset.effectActive = false
+    phantomEffect() {
+        const phantoms = this.listMobsPhantoms()
+
+        for (p of phantoms) {
+            if (this.EVENT == this.EVENTS.LEVEL_UP) {
+                if (p.dataset.effectActive==String(false) && (LEVEL % 2) == 0) {
+                    p.style.opacity = '0.1'
+                    p.dataset.effectActive = true
+                }else{
+                    p.style.opacity = '1'
+                    p.dataset.effectActive = false
+                }
             }
         }
     },
     divideEffect(pos) {
-        if (this.EVENT == this.EVENTS.DEAD) {
-            const life = calcMobLife(pos)
+        if(pos) { 
+            const mob = pos['grid'].querySelector('div');
+            
+            if (this.EVENT == this.EVENTS.DEAD && mob.dataset.effect == this.DIVIDE) {
+                const life = calcMobLife(pos)
 
-            if (life<=0) {
-                setLogTerminal('Big Slime destruído, dos mini slime surgindo', true)
-                sequenceDropCreature(2, MOBS[2])
-            }
-        }
-    },
-    applyEffect(event) {
-        this.EVENT = event 
-        const grids = ARENA_GRIDS.filter(e => e['grid'].querySelector('div'))
-        
-        for(e of grids) {
-            const mob = e['grid'].querySelector('div')
-
-            if (mob.dataset.effect!=null) {
-                if (mob.dataset.effect == this.PHANTOM) {
-                    this.phantomEffect(mob)
-                }else if(mob.dataset.effect == this.DIVIDE) {
-                    this.divideEffect(e)
+                if (life<=0) {
+                    setLogTerminal('Big Slime destruído, dos mini slime surgindo', true)
+                    sequenceDropCreature(2, MOBS[2])
                 }
             }
         }
+    },
+    listMobsPhantoms () {
+        const phantoms = document.querySelectorAll("div.arena li div[data-effect='phantom']")
+        return phantoms
+    },
+    listMobsEffectives() {
+        const effectives = document.querySelectorAll("div.arena li > div[data-effect]:not([data-effect='null'])")
+        return effectives
+    },
+    applyEffect(event, data) {
+        this.EVENT = event 
+        const grids = ARENA_GRIDS.filter(e => e['grid'].querySelector('div'))
+
+        this.phantomEffect()
+        this.divideEffect(data)
     }
 }
 
@@ -285,14 +323,16 @@ const shop = () => {
 
     shop_item_extra_damage.querySelector('div.action').addEventListener('click', (_) => {
         if (POINTS >= PRICES.EXTRA_DAMAGE) {
-            setLogTerminal("Comprou o item Extra Damage por " + PRICES.EXTRA_DAMAGE + " pontos")
-
+            
             POINTS -= PRICES.EXTRA_DAMAGE
             EXTRA_DAMAGE++
-
+            
             PRICES.extraDamageUpdate()
             setExtraDamage(EXTRA_DAMAGE)
             setPoints(POINTS)
+
+            setLogTerminal("Comprou o item Extra Damage por " + PRICES.EXTRA_DAMAGE + " pontos")
+            setLogTerminal("Pobabilidade de dano crítico subiu para " + (CRITICAL_CONTROLLER.PROBABILITY + EXTRA_DAMAGE) + "%", true)
         }else{
             setLogTerminal("Pontos insuficientes para comprar o item", true)
         }
@@ -468,8 +508,11 @@ const calcMobLife = (pos, update = false) => {
     const life = mob.querySelector('div#life')
     const mob_personal_life = pos['mob'].life
     
+    const critical =  CRITICAL_CONTROLLER.tryCritical(EXTRA_DAMAGE)
+
     // calc damage basead in MOB_LIFE dafault
-    const damage = ((MIN_DAMAGE + EXTRA_DAMAGE)/100 * MOB_LIFE)
+    const damage = ((MIN_DAMAGE + EXTRA_DAMAGE)/100 * MOB_LIFE) + critical
+    if (critical>0) CRITICAL_CONTROLLER.criticalLog(damage)
     
     const current_life =  (parseInt(life.style.width) / 100) * mob_personal_life
     const new_life = (current_life-damage)
@@ -490,10 +533,10 @@ const shake = (pos) => {
         if (mob.querySelector('div')!=null) mob.querySelector('div').style.animation = ''
     }, 300)
 
-   const new_life = calcMobLife(pos, true) //(current_life-damage)
+   const new_life = calcMobLife(pos, true)
 
     if (new_life<=0) {
-        MOB_EFFECTS.applyEffect(MOB_EFFECTS.EVENTS.DEAD)
+        MOB_EFFECTS.applyEffect(MOB_EFFECTS.EVENTS.DEAD, pos)
         
         mob.innerHTML = ''
         perfect()
@@ -735,7 +778,7 @@ const incrementCreatureColorFilter = () => {
 
 const mobRaffle = () => {
     let r = Math.floor(Math.random() * 100)
-    fitMobs = MOBS.filter(m => (+r >= +m.RAFFLE.MIN) && (+r <= +m.RAFFLE.MAX) && (+LEVEL >= m.LEVEL))
+    const fitMobs = MOBS.filter(m => (+r >= +m.RAFFLE.MIN) && (+r <= +m.RAFFLE.MAX) && (+LEVEL >= m.LEVEL))
     r = Math.floor(Math.random()*fitMobs.length)
     return fitMobs[r]
 }
@@ -1014,6 +1057,8 @@ document.addEventListener("DOMContentLoaded", (_) => {
     initShootPosition()
     MOVEMENT_PLAYER_CONTROLLER.reset()
     MOVEMENT_PLAYER_CONTROLLER.movePlayer()
+    SYSTEM_CONTROLLER.reset()
+
     startTheme()
 
     ARENA = document.querySelector('.arena')
