@@ -94,7 +94,7 @@ GRID_SIZE = 60
 GRID_PADDING = 10
 MOB_SIZE = 40
 MOB_LIFE=1000
-MOB_LIFE_INCREMENT=10
+MOB_LIFE_INCREMENT=5
 MOB_HUE_ROTATE="0.0"
 
 
@@ -102,32 +102,52 @@ VELOCITY = 3
 
 const MOB_EFFECTS = {
     PHANTOM: 'phantom',
+    DIVIDE: 'divide',
+    EVENTS: {
+        LEVEL_UP: 'level_up',
+        DEAD: 'dead',
+        COLISION: 'colision'
+    },
+    EVENT: null,
     phantomEffect(mob) {
-        if (mob.dataset.effectActive==String(false) && (LEVEL % 2) == 0) {
-            mob.style.opacity = '0.1'
-            mob.dataset.effectActive = true
-        }else{
-            mob.style.opacity = '1'
-            mob.dataset.effectActive = false
+        if (this.EVENT == this.EVENTS.LEVEL_UP) {
+            if (mob.dataset.effectActive==String(false) && (LEVEL % 2) == 0) {
+                mob.style.opacity = '0.1'
+                mob.dataset.effectActive = true
+            }else{
+                mob.style.opacity = '1'
+                mob.dataset.effectActive = false
+            }
         }
     },
-    applyEffect() {
+    divideEffect(pos) {
+        if (this.EVENT == this.EVENTS.DEAD) {
+            const life = calcMobLife(pos)
+
+            if (life<=0) {
+                setLogTerminal('Big Slime destruído, dos mini slime surgindo', true)
+                sequenceDropCreature(2, MOBS[2])
+            }
+        }
+    },
+    applyEffect(event) {
+        this.EVENT = event 
         const grids = ARENA_GRIDS.filter(e => e['grid'].querySelector('div'))
         
         for(e of grids) {
             const mob = e['grid'].querySelector('div')
 
             if (mob.dataset.effect!=null) {
-                switch(mob.dataset.effect) {
-                    case this.PHANTOM: {
-                        this.phantomEffect(mob)
-                        break
-                    }
+                if (mob.dataset.effect == this.PHANTOM) {
+                    this.phantomEffect(mob)
+                }else if(mob.dataset.effect == this.DIVIDE) {
+                    this.divideEffect(e)
                 }
             }
         }
     }
 }
+
 const MOBS = [
     {
         NAME: 'Demon',
@@ -135,7 +155,8 @@ const MOBS = [
         COLISIONS: {LEFT: true, RIGHT: true, TOP: true, BOTTOM: true},
         EFFECT: null,
         LEVEL: 0,
-        RAFFLE: {MIN: 0, MAX: 100}
+        RAFFLE: {MIN: 0, MAX: 100},
+        ALERT: false
     },
     {
         NAME: 'Bat',
@@ -143,7 +164,26 @@ const MOBS = [
         COLISIONS: {LEFT: true, RIGHT: true, TOP: true, BOTTOM: true},
         EFFECT: MOB_EFFECTS.PHANTOM,
         LEVEL: 10,
-        RAFFLE: {MIN: 20, MAX: 30}
+        RAFFLE: {MIN: 20, MAX: 40},
+        ALERT: false
+    },
+    {
+        NAME: 'Slime',
+        IMG: 'https://media.tenor.com/mgZBc6GhNlUAAAAC/game-pixel-art.gif',
+        COLISIONS: {LEFT: true, RIGHT: true, TOP: true, BOTTOM: true},
+        EFFECT: null,
+        LEVEL: 1000,
+        RAFFLE: {MIN: 1000, MAX: 1000},
+        ALERT: false
+    },
+    {
+        NAME: 'Big Slime',
+        IMG: 'https://media.tenor.com/DuJ4EA8BUVUAAAAC/slime-pixel-art.gif',
+        COLISIONS: {LEFT: true, RIGHT: true, TOP: true, BOTTOM: true},
+        EFFECT: MOB_EFFECTS.DIVIDE,
+        LEVEL: 20,
+        RAFFLE: {MIN: 55, MAX: 58},
+        ALERT: false
     },
 ]
 
@@ -422,15 +462,9 @@ const perfect = () => {
     }
 }
 
-const shake = (pos) => {
+
+const calcMobLife = (pos, update = false) => {
     const mob = pos['grid']
-
-    mob.querySelector('div').style.animation = 'shake 0.5s'
-    setTimeout(()=>{
-        if (mob.querySelector('div')!=null) mob.querySelector('div').style.animation = ''
-    }, 300)
-
-    
     const life = mob.querySelector('div#life')
     const mob_personal_life = pos['mob'].life
     
@@ -439,13 +473,31 @@ const shake = (pos) => {
     
     const current_life =  (parseInt(life.style.width) / 100) * mob_personal_life
     const new_life = (current_life-damage)
-    const new_life_percent = (new_life*100) / mob_personal_life
+
+    if (update) {
+        const new_life_percent = (new_life*100) / mob_personal_life
+        life.style.width = new_life_percent + '%'
+    }
+
+    return new_life
+}
+
+const shake = (pos) => {
+    const mob = pos['grid']
     
-    life.style.width = new_life_percent + '%'
+    mob.querySelector('div').style.animation = 'shake 0.5s'
+    setTimeout(()=>{
+        if (mob.querySelector('div')!=null) mob.querySelector('div').style.animation = ''
+    }, 300)
+
+   const new_life = calcMobLife(pos, true) //(current_life-damage)
 
     if (new_life<=0) {
+        MOB_EFFECTS.applyEffect(MOB_EFFECTS.EVENTS.DEAD)
+        
         mob.innerHTML = ''
         perfect()
+        
         playSound(SOUNDS.BUG_FINISH, 1.0)
     }else{
         playSound(SOUNDS.SHOOT_COLISION, 1.0)
@@ -685,10 +737,10 @@ const mobRaffle = () => {
     let r = Math.floor(Math.random() * 100)
     fitMobs = MOBS.filter(m => (+r >= +m.RAFFLE.MIN) && (+r <= +m.RAFFLE.MAX) && (+LEVEL >= m.LEVEL))
     r = Math.floor(Math.random()*fitMobs.length)
-    return MOBS[r]
+    return fitMobs[r]
 }
 
-const dropCreature = () => {
+const dropCreature = (mob_raffle) => {
     const pos = Math.floor(Math.random() * ARENA_GRIDS.length)
     const mob = document.createElement('div')
     const life = document.createElement('div')
@@ -697,10 +749,10 @@ const dropCreature = () => {
     if (ARENA_GRIDS[pos]['grid'].querySelector('div')!=null) {
         total = ARENA_GRIDS.filter(e => e['grid'].querySelector('div')).length
         if (total>=ARENA_GRIDS.length) return false
-        return dropCreature()
+        return dropCreature(mob_raffle)
     }
 
-    mob_raffle = mobRaffle()
+    if (mob_raffle==null) mob_raffle = mobRaffle()
 
     mob.style.left = grid_rect.left + 'px'
     mob.style.width = MOB_SIZE + 'px'
@@ -733,10 +785,10 @@ const dropCreature = () => {
     ARENA_GRIDS[pos]['grid'].append(life)
 }
 
-const sequenceDropCreature = (sequence) => {
+const sequenceDropCreature = (sequence, mob_select) => {
     count=0
     while(count < sequence) {
-        dropCreature()
+        dropCreature(mob_select)
         count++
     }
 }
@@ -882,7 +934,7 @@ const levelUpdate = () => {
     setLogTerminal("Novos bugs entraram na arena")
     
     MOB_DROP_AMOUNTS.changeDrops()
-    MOB_EFFECTS.applyEffect()
+    MOB_EFFECTS.applyEffect(MOB_EFFECTS.EVENTS.LEVEL_UP)
 
     setExtraDamage()
     gameOver()
