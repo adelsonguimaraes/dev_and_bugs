@@ -32,14 +32,26 @@ const MOVEMENT_PLAYER_CONTROLLER = {
             this.SOUND_ON=null
         }
     },
-    stopAtLimit() {
+    stopAtLimitLeft() {
         const shot_position = document.querySelector('div.shot--position')
         const spr = shot_position.getBoundingClientRect()
         const ar = document.querySelector('div.arena').getBoundingClientRect()
-        const l = ((spr.left + spr.width) >= ar.right)
-        const r = (spr.left <= ar.left)
+        const left = ((spr.left + spr.width) >= ar.right)
+        
+        if (left) {
+            this.stopSoundEffect()
+            setLogTerminal('Chegou no limite da área de tiro', true)
+            return false
+        }
+        return true
+    },
+    stopAtLimitRight() {
+        const shot_position = document.querySelector('div.shot--position')
+        const spr = shot_position.getBoundingClientRect()
+        const ar = document.querySelector('div.arena').getBoundingClientRect()
+        const right = (spr.left <= ar.left)
 
-        if (l || r) {
+        if (right) {
             this.stopSoundEffect()
             setLogTerminal('Chegou no limite da área de tiro', true)
             return false
@@ -56,14 +68,14 @@ const MOVEMENT_PLAYER_CONTROLLER = {
             }
             if (ON) return setLogTerminal('Não pode ser movimentar durante o disparo', true)
     
-            if (e.code==='ArrowRight' && this.stopAtLimit()) {
+            if (e.code==='ArrowRight' && this.stopAtLimitLeft()) {
                 shot_position.style.left = parseFloat(shot_position.style.left) + 1 + 'px'
                 shot_position.style.transform = "scaleX(1)"
                 this.PLAYERS_CURRENT_MOVEMENT++
                 this.updateMovimentBar()
                 this.startSoundEffect()
             }
-            if (e.code==='ArrowLeft' && this.stopAtLimit()) {
+            if (e.code==='ArrowLeft' && this.stopAtLimitRight()) {
                 shot_position.style.left = parseFloat(shot_position.style.left) - 1 + 'px'
                 shot_position.style.transform = "scaleX(-1)"
                 this.PLAYERS_CURRENT_MOVEMENT++
