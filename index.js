@@ -1,3 +1,161 @@
+const BOSS_CONTROLLER = {
+    ON: false,
+    ELEMENT: null,
+    LIFE: 0,
+    reset() {
+        this.ON = false
+        this.ELEMENT = null
+        this.LIFE = 0
+    },
+    removeMobs() {
+        if (ARENA_GRIDS[20]['grid'].querySelector("div")!=null) ARENA_GRIDS[20]['grid'].innerHTML = ''
+        if (ARENA_GRIDS[21]['grid'].querySelector("div")!=null) ARENA_GRIDS[21]['grid'].innerHTML = ''
+        if (ARENA_GRIDS[26]['grid'].querySelector("div")!=null) ARENA_GRIDS[26]['grid'].innerHTML = ''
+        if (ARENA_GRIDS[27]['grid'].querySelector("div")!=null) ARENA_GRIDS[27]['grid'].innerHTML = ''
+    },
+    showBoss() {
+        if (LEVEL==50) {
+
+            // setTimeout(() => {
+                this.removeMobs()
+
+                const slot =  document.querySelector("li#slot_20").getBoundingClientRect()
+                const boss_area = document.createElement('div')
+                const ar = document.querySelector('div.arena').getBoundingClientRect()
+                boss_area.style.width = (GRID_SIZE*2) + 'px'
+                boss_area.style.height = (GRID_SIZE*2) + 'px'
+                // boss_area.style.backgroundColor = 'orange'
+                boss_area.style.position = 'absolute'
+                boss_area.style.left = (slot.x - ar.x) + 'px'
+                boss_area.style.top = (slot.y - ar.y) + 'px'
+                boss_area.style.backgroundImage = "url("+ MOBS[0].IMG +")"
+                boss_area.style.backgroundSize = '80% 80%'
+                boss_area.style.backgroundRepeat = 'no-repeat'
+                boss_area.style.backgroundPosition = 'center'
+                boss_area.style.display = 'flex'
+                boss_area.style.justifyContent = 'center';
+                // boss_area.style.opacity = '0.5'
+                
+                const bl = this.showBossLife()
+                boss_area.append(bl)
+
+                this.ELEMENT = boss_area
+                this.ON = true
+                
+                this.LIFE = (MOB_LIFE + (MOB_LIFE*MOB_LIFE_INCREMENT/100))
+                this.LIFE *= 50
+                
+                ARENA.append(boss_area)
+                
+            // }, 50);
+        }
+    },
+    showBossLife() {
+        const bl = document.createElement('div')
+        bl.id = 'boss_life'
+        bl.style.width = '80%'
+        bl.style.height = '10px'
+        bl.style.backgroundColor = 'red'
+        bl.style.position = 'absolute'
+        bl.style.bottom = 0
+        return bl
+    },
+    applyDamage() {
+
+        if (this.ELEMENT == null) return false
+
+        const el_life = this.ELEMENT.querySelector('#boss_life')
+        const critical =  CRITICAL_CONTROLLER.tryCritical(EXTRA_DAMAGE)
+    
+        // calc damage basead in MOB_LIFE dafault
+        const damage = ((MIN_DAMAGE + EXTRA_DAMAGE)/100 * MOB_LIFE) + critical
+        if (critical>0) CRITICAL_CONTROLLER.criticalLog(damage)
+        
+        const current_life =  (parseInt(el_life.style.width) / 100) * this.LIFE
+
+        console.log(current_life);
+
+        const new_life = (current_life-damage)
+
+        const new_life_percent = (new_life*100) / this.LIFE
+        el_life.style.width = new_life_percent + '%'
+
+        if (new_life <= 0) {
+            this.ELEMENT.remove()
+            this.reset()
+            playSound(SOUNDS.BUG_FINISH, 1.0)
+            setLogTerminal("Boss derrotado!!!!")
+        }else{
+            playSound(SOUNDS.SHOOT_COLISION, 1.0)
+        }
+    },
+    dropConflict(pos) {
+        if (this.ON) {
+            if (ARENA_GRIDS[pos]['grid'].id == "slot_20"
+            || ARENA_GRIDS[pos]['grid'].id == "slot_21"
+            || ARENA_GRIDS[pos]['grid'].id == "slot_26"
+            || ARENA_GRIDS[pos]['grid'].id == "slot_27") {
+                return true
+            }
+        }
+        return false
+    },
+    colisionLeft(r, b, br, ar) {
+       if ((br.right >= r.left && br.left <= r.left) && (br.bottom >= r.top && br.top<= r.bottom)) {
+           const calc = (r.left - ar.left) - BULLET_SIZE
+           setBulletPosition(b, calc)
+           incrementColision(b)
+           this.applyDamage()
+           b.dataset.directionX *= -1
+        }
+    },
+    colisionRight(r, b, br, ar) {
+        if ((br.left <= r.right && br.right >= r.right) && (br.bottom >= r.top && br.top<= r.bottom)) {
+              const calc = (r.right - ar.left) + 1
+              setBulletPosition(b, calc)
+              incrementColision(b)
+              this.applyDamage()
+              b.dataset.directionX *= -1
+         }
+     },
+     colisionTop(r, b, br, ar) {
+        bdr = document.body.getBoundingClientRect()
+
+        if ((br.bottom >= r.top && br.top <= r.top) && (br.right >= r.left && br.left <= r.right)) {
+            const calc = (r.top - ar.top) - 11
+            setBulletPosition(b, null, calc)
+            incrementColision(b)
+            this.applyDamage()
+            b.dataset.directionY *= -1
+         }
+     },
+     colisionBottom(r, b, br, ar) {
+        if ((br.top <= r.bottom && br.bottom >= r.bottom) && (br.right >= r.left && br.left <= r.right)) {
+            const calc = (r.bottom - ar.top) + 1
+            setBulletPosition(b, null, calc)
+            incrementColision(b)
+            this.applyDamage()
+            b.dataset.directionY *= -1
+            
+         }
+     },
+    colisions() {
+        if (!this.ON || this.ELEMENT == null) return false
+
+        const bullets = Array.from(document.querySelectorAll('div.bullet'))
+        const r =  this.ELEMENT.getBoundingClientRect()
+        const ar = ARENA.getBoundingClientRect()
+
+        for (b of bullets) {
+            const br = b.getBoundingClientRect()
+            this.colisionLeft(r, b, br, ar)
+            this.colisionRight(r, b, br, ar)
+            this.colisionTop(r, b, br, ar)
+            this.colisionBottom(r, b, br, ar)
+        }
+    }
+}
+
 const SYSTEM_CONTROLLER = {
     reset() {
         const btn_reset = document.querySelector('div.btn-reset-game')
@@ -417,6 +575,7 @@ const createArenaGrid = () => {
         }
         
         const li = document.createElement('li')
+        li.id = 'slot_'+r
         li.style.width = GRID_SIZE + 'px'
         li.style.height = GRID_SIZE + 'px'
         li.style.backgroundColor = bg
@@ -677,6 +836,7 @@ const shiftBullet = () => {
         arenaCollisionY(b)
         mobCollisionX(b)
         mobCollisionY(b)
+        BOSS_CONTROLLER.colisions()
     }
 }
 
@@ -789,9 +949,10 @@ const dropCreature = (mob_raffle) => {
     const life = document.createElement('div')
     const grid_rect = ARENA_GRIDS[pos]['grid'].getBoundingClientRect()
 
-    if (ARENA_GRIDS[pos]['grid'].querySelector('div')!=null) {
+    if (ARENA_GRIDS[pos]['grid'].querySelector('div')!=null || BOSS_CONTROLLER.dropConflict(pos)) {
         total = ARENA_GRIDS.filter(e => e['grid'].querySelector('div')).length
         if (total>=ARENA_GRIDS.length) return false
+        if (total>=(ARENA_GRIDS.length-4) && BOSS_CONTROLLER.ON) return false
         return dropCreature(mob_raffle)
     }
 
@@ -955,18 +1116,19 @@ const MOB_DROP_AMOUNTS = {
             if (!this.ALERTS.LEVEL_30) setLogTerminal(`Level ${this.LEVEL_30.min}, dropando ${this.LEVEL_30.drops} bugs por level`, true)
             this.ALERTS.LEVEL_30 = true
 
-        }else if (LEVEL>=this.LEVEL_50.min && LEVEL<=this.LEVEL_50.max) {
-            sequenceDropCreature(this.LEVEL_50.drops)
-            if (!this.ALERTS.LEVEL_50) setLogTerminal(`Level ${this.LEVEL_50.min}, dropando ${this.LEVEL_50.drops} bugs por level`, true)
-            this.ALERTS.LEVEL_50 = true
+        }
+        // else if (LEVEL>=this.LEVEL_50.min && LEVEL<=this.LEVEL_50.max) {
+        //     sequenceDropCreature(this.LEVEL_50.drops)
+        //     if (!this.ALERTS.LEVEL_50) setLogTerminal(`Level ${this.LEVEL_50.min}, dropando ${this.LEVEL_50.drops} bugs por level`, true)
+        //     this.ALERTS.LEVEL_50 = true
         
 
-        }else if (LEVEL>=this.LEVEL_100.min && LEVEL<=this.LEVEL_100.max) {
-            sequenceDropCreature(this.LEVEL_100.drops)
-            if (!this.ALERTS.LEVEL_100) setLogTerminal(`Level ${this.LEVEL_100.min}, dropando ${this.LEVEL_100.drops} bugs por level`, true)
-            this.ALERTS.LEVEL_100 = true
+        // }else if (LEVEL>=this.LEVEL_100.min && LEVEL<=this.LEVEL_100.max) {
+        //     sequenceDropCreature(this.LEVEL_100.drops)
+        //     if (!this.ALERTS.LEVEL_100) setLogTerminal(`Level ${this.LEVEL_100.min}, dropando ${this.LEVEL_100.drops} bugs por level`, true)
+        //     this.ALERTS.LEVEL_100 = true
 
-        }
+        // }
     }
 }
 
@@ -979,8 +1141,11 @@ const levelUpdate = () => {
     MOB_DROP_AMOUNTS.changeDrops()
     MOB_EFFECTS.applyEffect(MOB_EFFECTS.EVENTS.LEVEL_UP)
 
+    
     setExtraDamage()
     gameOver()
+    
+    BOSS_CONTROLLER.showBoss()
 }
 
 const reset = () => {
