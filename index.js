@@ -14,7 +14,7 @@ const BOSS_CONTROLLER = {
         if (ARENA_GRIDS[27]['grid'].querySelector("div")!=null) ARENA_GRIDS[27]['grid'].innerHTML = ''
     },
     showBoss() {
-        if (LEVEL==50) {
+        if (LEVEL==50 || LEVEL ==100) {
 
             // setTimeout(() => {
                 this.removeMobs()
@@ -43,7 +43,7 @@ const BOSS_CONTROLLER = {
                 this.ON = true
                 
                 this.LIFE = (MOB_LIFE + (MOB_LIFE*MOB_LIFE_INCREMENT/100))
-                this.LIFE *= 50
+                this.LIFE *= 60
                 
                 ARENA.append(boss_area)
                 
@@ -72,8 +72,6 @@ const BOSS_CONTROLLER = {
         if (critical>0) CRITICAL_CONTROLLER.criticalLog(damage)
         
         const current_life =  (parseInt(el_life.style.width) / 100) * this.LIFE
-
-        console.log(current_life);
 
         const new_life = (current_life-damage)
 
@@ -1174,7 +1172,7 @@ const reset = () => {
 const gameOver = () => {
     total = ARENA_GRIDS.filter(e => e['grid'].querySelector('div')).length
     
-    if (total>=ARENA_GRIDS.length) {
+    if (total>=ARENA_GRIDS.length || (total>=(ARENA_GRIDS.length-4) && BOSS_CONTROLLER.ON)) {
         setLogTerminal(`O jogo acabou, você chegou ao Level: ${LEVEL}`, true)
         res = alert('Game Over')
         if (res==undefined) {
