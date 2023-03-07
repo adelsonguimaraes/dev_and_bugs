@@ -8,10 +8,10 @@ const BOSS_CONTROLLER = {
         this.LIFE = 0
     },
     removeMobs() {
-        if (ARENA_GRIDS[20]['grid'].querySelector("div")!=null) ARENA_GRIDS[20]['grid'].innerHTML = ''
-        if (ARENA_GRIDS[21]['grid'].querySelector("div")!=null) ARENA_GRIDS[21]['grid'].innerHTML = ''
-        if (ARENA_GRIDS[26]['grid'].querySelector("div")!=null) ARENA_GRIDS[26]['grid'].innerHTML = ''
-        if (ARENA_GRIDS[27]['grid'].querySelector("div")!=null) ARENA_GRIDS[27]['grid'].innerHTML = ''
+        ARENA_GRIDS[20]['grid'].innerHTML = ''
+        ARENA_GRIDS[21]['grid'].innerHTML = ''
+        ARENA_GRIDS[26]['grid'].innerHTML = ''
+        ARENA_GRIDS[27]['grid'].innerHTML = ''
     },
     showBoss() {
         if (LEVEL==50 || LEVEL ==100) {
@@ -941,16 +941,20 @@ const mobRaffle = () => {
     return fitMobs[r]
 }
 
+const validateFinalGame = () => {
+    const total = ARENA_GRIDS.filter(e => e['grid'].querySelector('div')).length
+    return ((total>=ARENA_GRIDS.length) || (total>=(ARENA_GRIDS.length-4) && BOSS_CONTROLLER.ON))
+}
+
 const dropCreature = (mob_raffle) => {
+    if (validateFinalGame()) return false
+
     const pos = Math.floor(Math.random() * ARENA_GRIDS.length)
     const mob = document.createElement('div')
     const life = document.createElement('div')
     const grid_rect = ARENA_GRIDS[pos]['grid'].getBoundingClientRect()
 
     if (ARENA_GRIDS[pos]['grid'].querySelector('div')!=null || BOSS_CONTROLLER.dropConflict(pos)) {
-        total = ARENA_GRIDS.filter(e => e['grid'].querySelector('div')).length
-        if (total>=ARENA_GRIDS.length) return false
-        if (total>=(ARENA_GRIDS.length-4) && BOSS_CONTROLLER.ON) return false
         return dropCreature(mob_raffle)
     }
 
@@ -1089,8 +1093,8 @@ const shoot = () => {
 const MOB_DROP_AMOUNTS = {
     LEVEL_0: {min:0, max:30, drops: 2},
     LEVEL_30: {min:30, max:50, drops: 3},
-    LEVEL_50: {min: 50, max:100,  drops: 4},
-    LEVEL_100: {min: 100, max:999999, drops: 5},
+    LEVEL_50: {min: 50, max:100,  drops: 3},//4},
+    LEVEL_100: {min: 100, max:999999, drops: 3},//5},
     ALERTS: {
         LEVEL_0: false,
         LEVEL_30: false,
@@ -1115,18 +1119,18 @@ const MOB_DROP_AMOUNTS = {
             this.ALERTS.LEVEL_30 = true
 
         }
-        // else if (LEVEL>=this.LEVEL_50.min && LEVEL<=this.LEVEL_50.max) {
-        //     sequenceDropCreature(this.LEVEL_50.drops)
-        //     if (!this.ALERTS.LEVEL_50) setLogTerminal(`Level ${this.LEVEL_50.min}, dropando ${this.LEVEL_50.drops} bugs por level`, true)
-        //     this.ALERTS.LEVEL_50 = true
+        else if (LEVEL>=this.LEVEL_50.min && LEVEL<=this.LEVEL_50.max) {
+            sequenceDropCreature(this.LEVEL_50.drops)
+            if (!this.ALERTS.LEVEL_50) setLogTerminal(`Level ${this.LEVEL_50.min}, dropando ${this.LEVEL_50.drops} bugs por level`, true)
+            this.ALERTS.LEVEL_50 = true
         
 
-        // }else if (LEVEL>=this.LEVEL_100.min && LEVEL<=this.LEVEL_100.max) {
-        //     sequenceDropCreature(this.LEVEL_100.drops)
-        //     if (!this.ALERTS.LEVEL_100) setLogTerminal(`Level ${this.LEVEL_100.min}, dropando ${this.LEVEL_100.drops} bugs por level`, true)
-        //     this.ALERTS.LEVEL_100 = true
+        }else if (LEVEL>=this.LEVEL_100.min && LEVEL<=this.LEVEL_100.max) {
+            sequenceDropCreature(this.LEVEL_100.drops)
+            if (!this.ALERTS.LEVEL_100) setLogTerminal(`Level ${this.LEVEL_100.min}, dropando ${this.LEVEL_100.drops} bugs por level`, true)
+            this.ALERTS.LEVEL_100 = true
 
-        // }
+        }
     }
 }
 
@@ -1172,7 +1176,7 @@ const reset = () => {
 const gameOver = () => {
     total = ARENA_GRIDS.filter(e => e['grid'].querySelector('div')).length
     
-    if (total>=ARENA_GRIDS.length || (total>=(ARENA_GRIDS.length-4) && BOSS_CONTROLLER.ON)) {
+    if (validateFinalGame()) {
         setLogTerminal(`O jogo acabou, você chegou ao Level: ${LEVEL}`, true)
         res = alert('Game Over')
         if (res==undefined) {
