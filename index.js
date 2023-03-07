@@ -34,7 +34,7 @@ const BOSS_CONTROLLER = {
                 boss_area.style.backgroundPosition = 'center'
                 boss_area.style.display = 'flex'
                 boss_area.style.justifyContent = 'center';
-                // boss_area.style.opacity = '0.5'
+                // boss_area.style.opacity = '0.2'
                 
                 const bl = this.showBossLife()
                 boss_area.append(bl)
@@ -100,7 +100,8 @@ const BOSS_CONTROLLER = {
     },
     colisionLeft(r, b, br, ar) {
        if ((br.right >= r.left && br.left <= r.left) && (br.bottom >= r.top && br.top<= r.bottom)) {
-           const calc = (r.left - ar.left) - BULLET_SIZE
+           const calc = (r.left - ar.left) - (BULLET_SIZE + 1)
+
            setBulletPosition(b, calc)
            incrementColision(b)
            this.applyDamage()
@@ -109,18 +110,19 @@ const BOSS_CONTROLLER = {
     },
     colisionRight(r, b, br, ar) {
         if ((br.left <= r.right && br.right >= r.right) && (br.bottom >= r.top && br.top<= r.bottom)) {
-              const calc = (r.right - ar.left) + 1
-              setBulletPosition(b, calc)
-              incrementColision(b)
-              this.applyDamage()
-              b.dataset.directionX *= -1
+            const calc = (r.right - ar.left) + 1
+
+            setBulletPosition(b, calc)
+            incrementColision(b)
+            this.applyDamage()
+            b.dataset.directionX *= -1
          }
      },
      colisionTop(r, b, br, ar) {
         bdr = document.body.getBoundingClientRect()
 
         if ((br.bottom >= r.top && br.top <= r.top) && (br.right >= r.left && br.left <= r.right)) {
-            const calc = (r.top - ar.top) - 11
+            const calc = (r.top - ar.top) - (BULLET_SIZE + 1)
             setBulletPosition(b, null, calc)
             incrementColision(b)
             this.applyDamage()
