@@ -394,7 +394,7 @@ const PRICES = {
     BULLET: null,
     EXTRA_DAMAGE: null,
     reset() {
-        this.BULLET = 150
+        this.BULLET = 50
         this.EXTRA_DAMAGE = 50
         this.bulletPriceUpdate()
         this.extraDamageUpdate()
