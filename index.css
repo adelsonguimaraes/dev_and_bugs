@@ -58,6 +58,7 @@ body{
     cursor: none;
     max-width: var(--width);
     max-height: var(--height);
+    z-index: 1;
 }
 
 .box > .shot--area {

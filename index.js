@@ -545,6 +545,24 @@ const security = () => {
     }
 }
 
+// const setArenaBgColor = (boss=false) => {
+//     const slots = Array.from(document.querySelectorAll('div.arena ul li'))
+//     let count = 0
+//     for (s of slots) {
+//         if (count>=ARENA_ROWS) {
+//             invert = !invert
+//             count = 0
+//         }
+//         if (invert) {
+//             bg = ((r % 2)==0) ? bg2 : bg1
+//         }else{
+//             bg = ((r % 2)==0) ? bg1 : bg2
+//         }
+//         s.style.backgroundColor = (boss) ? '' : ''
+//         count ++
+//     }
+// }
+
 const createArenaGrid = () => {
     const ul = document.createElement('ul')
     ul.style.margin = 0
@@ -556,11 +574,10 @@ const createArenaGrid = () => {
     ul.style.flexDirection = 'row'
     ul.style.flexWrap = 'wrap'
     
+
     let count = 0
     let invert = false
     for(let r=0; r<ARENA_ROWS*ARENA_COLUMNS; r++) {
-        bg1 = '#404040'
-        bg2 = '#343434'
         bg = null
 
         if (count>=ARENA_ROWS) {
@@ -1013,14 +1030,27 @@ const createTestElement = (x, y) => {
     ARENA.append(teste)
 }
 
+const invalidPosition = (e) => {
+    const arena_rect = document.querySelector('div.arena').getBoundingClientRect()
+
+    if ((e.pageX <= arena_rect.x || e.pageX >= (arena_rect.x + arena_rect.width)) 
+        || (e.pageY >= (arena_rect.y + arena_rect.height)) || (e.pageY <= arena_rect.y)) {
+            document.body.style.cursor = 'not-allowed'
+            return true
+        }
+    return false
+}
+
 const drawLine = () => {
-    ARENA.addEventListener('mousemove', (e) => {
+    document.querySelector('div.arena').addEventListener('mousemove', (e) => {
         if (ON) return false
         if (MOVEMENT_PLAYER_CONTROLLER.ON) return false
+        if (invalidPosition(e)) return false
 
         const spr = document.querySelector('div.shot--position').getBoundingClientRect()
-
         const arena_rect = ARENA.getBoundingClientRect()
+
+
         const x1 = spr.left + (spr.width/2) - arena_rect.x
         const y1 = spr.top + (spr.height/2) - arena_rect.y
         const x2 = e.pageX-arena_rect.x
@@ -1058,12 +1088,16 @@ const setBulletPosition = (b, x=null, y=null) => {
 }
 
 const shoot = () => {
-    ARENA.addEventListener('click', (e) => {
+    document.body.addEventListener('click', (e) => {
+        if (invalidPosition(e)) return setLogTerminal('Posição inválida para atirar', true)
         
         if (!ON) {
             security()
             removeAllBullets()
+            
+            const arena_rect = document.querySelector('div.arena').getBoundingClientRect()
             const spr = document.querySelector('div.shot--position').getBoundingClientRect()
+
 
             let x = e.x - spr.x - (spr.width/2) - (BULLET_SIZE/2)
             let y = e.y - spr.y - (spr.height/2) - (BULLET_SIZE/2)
