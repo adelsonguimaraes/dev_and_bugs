@@ -563,6 +563,9 @@ const security = () => {
 //     }
 // }
 
+const bg1 = '#404040'
+const bg2 = '#343434'
+
 const createArenaGrid = () => {
     const ul = document.createElement('ul')
     ul.style.margin = 0
