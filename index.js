@@ -1,3 +1,139 @@
+const MOB_EFFECTS = {
+    PHANTOM: 'phantom',
+    DIVIDE: 'divide',
+    EVENTS: {
+        LEVEL_UP: 'level_up',
+        DEAD: 'dead',
+        COLISION: 'colision'
+    },
+    EVENT: null,
+    phantomEffect() {
+        const phantoms = this.listMobsPhantoms()
+
+        for (p of phantoms) {
+            if (this.EVENT == this.EVENTS.LEVEL_UP) {
+                if (p.dataset.effectActive==String(false) && (LEVEL % 2) == 0) {
+                    p.style.opacity = '0.1'
+                    p.dataset.effectActive = true
+                }else{
+                    p.style.opacity = '1'
+                    p.dataset.effectActive = false
+                }
+            }
+        }
+    },
+    divideEffect(pos) {
+        if(pos) { 
+            const mob = pos['grid'].querySelector('div');
+            
+            if (this.EVENT == this.EVENTS.DEAD && mob.dataset.effect == this.DIVIDE) {
+                const life = calcMobLife(pos)
+
+                if (life<=0) {
+                    setLogTerminal('Big Slime destruído, dos mini slime surgindo', true)
+                    sequenceDropCreature(2, MOBS[2])
+                }
+            }
+        }
+    },
+    listMobsPhantoms () {
+        const phantoms = document.querySelectorAll("div.arena li div[data-effect='phantom']")
+        return phantoms
+    },
+    listMobsEffectives() {
+        const effectives = document.querySelectorAll("div.arena li > div[data-effect]:not([data-effect='null'])")
+        return effectives
+    },
+    applyEffect(event, data) {
+        this.EVENT = event 
+        const grids = ARENA_GRIDS.filter(e => e['grid'].querySelector('div'))
+
+        this.phantomEffect()
+        this.divideEffect(data)
+    }
+}
+
+const MOBS = [
+    {
+        NAME: 'Demon',
+        IMG: 'https://media.tenor.com/gFvc0poigIYAAAAM/demon-red.gif',
+        COLISIONS: {LEFT: true, RIGHT: true, TOP: true, BOTTOM: true},
+        EFFECT: null,
+        LEVEL: 0,
+        RAFFLE: {MIN: 0, MAX: 100},
+        ALERT: false
+    },
+    {
+        NAME: 'Bat',
+        IMG: 'https://i.gifer.com/origin/ce/ce1c245954005ac923e3cea5f70518df_w200.gif',
+        COLISIONS: {LEFT: true, RIGHT: true, TOP: true, BOTTOM: true},
+        EFFECT: MOB_EFFECTS.PHANTOM,
+        LEVEL: 10,
+        RAFFLE: {MIN: 20, MAX: 40},
+        ALERT: false
+    },
+    {
+        NAME: 'Slime',
+        IMG: 'https://media.tenor.com/mgZBc6GhNlUAAAAC/game-pixel-art.gif',
+        COLISIONS: {LEFT: true, RIGHT: true, TOP: true, BOTTOM: true},
+        EFFECT: null,
+        LEVEL: 1000,
+        RAFFLE: {MIN: 1000, MAX: 1000},
+        ALERT: false
+    },
+    {
+        NAME: 'Big Slime',
+        IMG: 'https://media.tenor.com/DuJ4EA8BUVUAAAAC/slime-pixel-art.gif',
+        COLISIONS: {LEFT: true, RIGHT: true, TOP: true, BOTTOM: true},
+        EFFECT: MOB_EFFECTS.DIVIDE,
+        LEVEL: 20,
+        RAFFLE: {MIN: 55, MAX: 58},
+        ALERT: false
+    },
+]
+
+const DUNGEONS = {
+    LIST: [
+        {
+            LEVEL: 50,
+            BOSS: MOBS[0].IMG,
+            BG: '#221a06',
+            MULTIPLIER: 60,
+            NAME: 'Amarela'
+        },
+        {
+            LEVEL: 100,
+            BOSS: MOBS[1].IMG,
+            BG: '#221628',
+            MULTIPLIER: 70,
+            NAME: 'Roxa'
+        },
+        {
+            LEVEL: 150,
+            BOSS: MOBS[2].IMG,
+            BG: '#090b20',
+            MULTIPLIER: 80,
+            NAME: 'Azul'
+        },
+        {
+            LEVEL: 200,
+            BOSS: MOBS[3].IMG,
+            BG: '#260000',
+            MULTIPLIER: 90,
+            NAME: 'Vermelha'
+        }
+    ],
+    getLevels() {
+        const levels = this.LIST.map(e => e.LEVEL)
+        return levels
+    },
+    getByLevel(level) {
+        const d = this.LIST.filter(e => e.LEVEL == level)
+        if(d.length<0) console.error('Dungeons.getByLevel: Nenhum resultado foi encontrado');
+        return d[0]
+    }
+}
+
 const BOSS_CONTROLLER = {
     ON: false,
     ELEMENT: null,
@@ -14,7 +150,12 @@ const BOSS_CONTROLLER = {
         ARENA_GRIDS[27]['grid'].innerHTML = ''
     },
     showBoss() {
-        if (LEVEL==50 || LEVEL ==100) {
+        const compare_dungeon_Levels = DUNGEONS.getLevels().map(e => `${LEVEL} == ${e}`).join(' || ')
+        if (!this.ON && eval(compare_dungeon_Levels)) {
+            const dungeon = DUNGEONS.getByLevel(LEVEL)
+
+            showLevel('Dungeon ' + dungeon.NAME)
+            // THEME_ON = playSound(SOUNDS.BOSS_BATTLE, 0.2, true)
 
             // setTimeout(() => {
                 this.removeMobs()
@@ -28,7 +169,7 @@ const BOSS_CONTROLLER = {
                 boss_area.style.position = 'absolute'
                 boss_area.style.left = (slot.x - ar.x) + 'px'
                 boss_area.style.top = (slot.y - ar.y) + 'px'
-                boss_area.style.backgroundImage = "url("+ MOBS[0].IMG +")"
+                boss_area.style.backgroundImage = "url("+ dungeon.BOSS +")"
                 boss_area.style.backgroundSize = '80% 80%'
                 boss_area.style.backgroundRepeat = 'no-repeat'
                 boss_area.style.backgroundPosition = 'center'
@@ -43,9 +184,10 @@ const BOSS_CONTROLLER = {
                 this.ON = true
                 
                 this.LIFE = (MOB_LIFE + (MOB_LIFE*MOB_LIFE_INCREMENT/100))
-                this.LIFE *= 60
+                this.LIFE *= dungeon.MULTIPLIER
                 
                 ARENA.append(boss_area)
+                ARENA.style.backgroundColor = dungeon.BG
                 
             // }, 50);
         }
@@ -83,6 +225,9 @@ const BOSS_CONTROLLER = {
             this.reset()
             playSound(SOUNDS.BUG_FINISH, 1.0)
             setLogTerminal("Boss derrotado!!!!")
+            // THEME_ON.pause()
+            // THEME_ON = null
+
         }else{
             playSound(SOUNDS.SHOOT_COLISION, 1.0)
         }
@@ -289,100 +434,6 @@ MOB_HUE_ROTATE = "0.0"
 
 VELOCITY = 3
 
-const MOB_EFFECTS = {
-    PHANTOM: 'phantom',
-    DIVIDE: 'divide',
-    EVENTS: {
-        LEVEL_UP: 'level_up',
-        DEAD: 'dead',
-        COLISION: 'colision'
-    },
-    EVENT: null,
-    phantomEffect() {
-        const phantoms = this.listMobsPhantoms()
-
-        for (p of phantoms) {
-            if (this.EVENT == this.EVENTS.LEVEL_UP) {
-                if (p.dataset.effectActive==String(false) && (LEVEL % 2) == 0) {
-                    p.style.opacity = '0.1'
-                    p.dataset.effectActive = true
-                }else{
-                    p.style.opacity = '1'
-                    p.dataset.effectActive = false
-                }
-            }
-        }
-    },
-    divideEffect(pos) {
-        if(pos) { 
-            const mob = pos['grid'].querySelector('div');
-            
-            if (this.EVENT == this.EVENTS.DEAD && mob.dataset.effect == this.DIVIDE) {
-                const life = calcMobLife(pos)
-
-                if (life<=0) {
-                    setLogTerminal('Big Slime destruído, dos mini slime surgindo', true)
-                    sequenceDropCreature(2, MOBS[2])
-                }
-            }
-        }
-    },
-    listMobsPhantoms () {
-        const phantoms = document.querySelectorAll("div.arena li div[data-effect='phantom']")
-        return phantoms
-    },
-    listMobsEffectives() {
-        const effectives = document.querySelectorAll("div.arena li > div[data-effect]:not([data-effect='null'])")
-        return effectives
-    },
-    applyEffect(event, data) {
-        this.EVENT = event 
-        const grids = ARENA_GRIDS.filter(e => e['grid'].querySelector('div'))
-
-        this.phantomEffect()
-        this.divideEffect(data)
-    }
-}
-
-const MOBS = [
-    {
-        NAME: 'Demon',
-        IMG: 'https://media.tenor.com/gFvc0poigIYAAAAM/demon-red.gif',
-        COLISIONS: {LEFT: true, RIGHT: true, TOP: true, BOTTOM: true},
-        EFFECT: null,
-        LEVEL: 0,
-        RAFFLE: {MIN: 0, MAX: 100},
-        ALERT: false
-    },
-    {
-        NAME: 'Bat',
-        IMG: 'https://i.gifer.com/origin/ce/ce1c245954005ac923e3cea5f70518df_w200.gif',
-        COLISIONS: {LEFT: true, RIGHT: true, TOP: true, BOTTOM: true},
-        EFFECT: MOB_EFFECTS.PHANTOM,
-        LEVEL: 10,
-        RAFFLE: {MIN: 20, MAX: 40},
-        ALERT: false
-    },
-    {
-        NAME: 'Slime',
-        IMG: 'https://media.tenor.com/mgZBc6GhNlUAAAAC/game-pixel-art.gif',
-        COLISIONS: {LEFT: true, RIGHT: true, TOP: true, BOTTOM: true},
-        EFFECT: null,
-        LEVEL: 1000,
-        RAFFLE: {MIN: 1000, MAX: 1000},
-        ALERT: false
-    },
-    {
-        NAME: 'Big Slime',
-        IMG: 'https://media.tenor.com/DuJ4EA8BUVUAAAAC/slime-pixel-art.gif',
-        COLISIONS: {LEFT: true, RIGHT: true, TOP: true, BOTTOM: true},
-        EFFECT: MOB_EFFECTS.DIVIDE,
-        LEVEL: 20,
-        RAFFLE: {MIN: 55, MAX: 58},
-        ALERT: false
-    },
-]
-
 const VELOCITY_MODES = {
     NORMAL: null,
     MODARATE: {ACTIVATE: 15, ACELERATION: 2, COLOR: '#ffa000', DAMAGE: 2, POINT: 2},
@@ -394,8 +445,8 @@ const PRICES = {
     BULLET: null,
     EXTRA_DAMAGE: null,
     reset() {
-        this.BULLET = 50
-        this.EXTRA_DAMAGE = 50
+        this.BULLET = 20
+        this.EXTRA_DAMAGE = 20
         this.bulletPriceUpdate()
         this.extraDamageUpdate()
     },
@@ -428,7 +479,7 @@ ARENA_GRIDS = []
 
 
 SAFE_BOUND = 0
-MIN_DAMAGE = 20
+MIN_DAMAGE = 40
 EXTRA_DAMAGE = 0
 
 INTERVAL=null
@@ -563,8 +614,8 @@ const security = () => {
 //     }
 // }
 
-const bg1 = '#404040'
-const bg2 = '#343434'
+const bg1 = '#40404081'
+const bg2 = '#34343481'
 
 const createArenaGrid = () => {
     const ul = document.createElement('ul')
@@ -658,7 +709,8 @@ const SOUNDS = {
     SHOOT: 'shoot',
     SHOOT_COLISION: 'shoot_colision',
     SHOOT_COLISION_ARENA: 'shoot_colision_arena',
-    BUG_FINISH: 'bug_finish'
+    BUG_FINISH: 'bug_finish',
+    BOSS_BATTLE: 'boss_battle'
 }
 
 const playSound = (sound, volume = 1.0, repeat = false) => {
@@ -931,7 +983,7 @@ const arenaCollisionY = (bullet) => {
             ON = false
             clearInterval(INTERVAL)
             INTERVAL=null
-            LEVEL++
+            if (!BOSS_CONTROLLER.ON) LEVEL++
             levelUpdate(LEVEL)
             ARENA.style.filter = 'none'
             MOVEMENT_PLAYER_CONTROLLER.reset()
@@ -1173,9 +1225,13 @@ const MOB_DROP_AMOUNTS = {
     }
 }
 
+const showLevel = (level) => {
+    info.querySelector('div.level').innerHTML = level
+}
+
 const levelUpdate = () => {
     info = document.querySelector('div.info')
-    info.querySelector('div.level').innerHTML = 'Level: ' + LEVEL
+    if (!BOSS_CONTROLLER.ON) showLevel('Level: ' + LEVEL)
     
     setLogTerminal("Novos bugs entraram na arena")
     
@@ -1200,8 +1256,9 @@ const reset = () => {
     BULLET_DIR_X = 1
     BULLET_DIR_Y = 1
     POINTS=0
-    MOB_LIFE_INCREMENT=10
+    MOB_LIFE_INCREMENT=3
     MOB_HUE_ROTATE="0.0"
+    BOSS_CONTROLLER.reset()
     setPoints(POINTS)
     createArenaGrid()
     levelUpdate()
@@ -1210,6 +1267,7 @@ const reset = () => {
     PRICES.reset()
     MOB_DROP_AMOUNTS.reset()
     MOVEMENT_PLAYER_CONTROLLER.restarPositionPlayer()
+    ARENA.style.backgroundColor = '#373737'
 }
 
 const gameOver = () => {
