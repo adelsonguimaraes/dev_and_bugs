@@ -90,38 +90,94 @@ const MOBS = [
         RAFFLE: {MIN: 55, MAX: 58},
         ALERT: false
     },
+    {
+        NAME: 'Sonolento',
+        IMG: './img/sonolento.gif',
+        COLISIONS: {LEFT: true, RIGHT: true, TOP: true, BOTTOM: true},
+        EFFECT: MOB_EFFECTS.DIVIDE,
+        LEVEL: 99999,
+        RAFFLE: {MIN: 55, MAX: 58},
+        ALERT: false
+    },
+]
+
+const BOSSES = [
+    {
+        NAME: MOBS[0].NAME,
+        IMG: MOBS[0].IMG,
+        ALERT: false
+    },
+    {
+        NAME: MOBS[1].NAME,
+        IMG: MOBS[1].IMG,
+        ALERT: false
+    },
+    {
+        NAME: MOBS[2].NAME,
+        IMG: MOBS[2].IMG,
+        ALERT: false
+    },
+    {
+        NAME: MOBS[3].NAME,
+        IMG: MOBS[3].IMG,
+        ALERT: false
+    },
+    {
+        NAME: 'Sonolento',
+        IMG: './img/sonolento.gif',
+        ALERT: false
+    },
+    {
+        NAME: 'Procrastinador',
+        IMG: './img/procrastinador.gif',
+        ALERT: false
+    },
 ]
 
 const DUNGEONS = {
     LIST: [
         {
             LEVEL: 50,
-            BOSS: MOBS[0].IMG,
+            BOSS: BOSSES[0].IMG,
             BG: '#221a06',
             MULTIPLIER: 60,
             NAME: 'Amarela'
         },
         {
             LEVEL: 100,
-            BOSS: MOBS[1].IMG,
+            BOSS: BOSSES[1].IMG,
             BG: '#221628',
             MULTIPLIER: 70,
             NAME: 'Roxa'
         },
         {
             LEVEL: 150,
-            BOSS: MOBS[2].IMG,
+            BOSS: BOSSES[2].IMG,
             BG: '#090b20',
             MULTIPLIER: 80,
             NAME: 'Azul'
         },
         {
             LEVEL: 200,
-            BOSS: MOBS[3].IMG,
-            BG: '#260000',
+            BOSS: BOSSES[3].IMG,
+            BG: '#a18b8b',
             MULTIPLIER: 90,
+            NAME: 'Branca'
+        },
+        {
+            LEVEL: 250,
+            BOSS: BOSSES[4].IMG,
+            BG: '#4c270a',
+            MULTIPLIER: 95,
+            NAME: 'Laranja'
+        },
+        {
+            LEVEL: 300,
+            BOSS: BOSSES[5].IMG,
+            BG: '#260000',
+            MULTIPLIER: 100,
             NAME: 'Vermelha'
-        }
+        },
     ],
     getLevels() {
         const levels = this.LIST.map(e => e.LEVEL)
@@ -392,30 +448,67 @@ const MOVEMENT_PLAYER_CONTROLLER = {
         }
         return true
     },
+    allowed() {
+        if (this.PLAYERS_CURRENT_MOVEMENT >= this.PLAYER_MOVIMENT_LIMITATION) {
+            this.stopSoundEffect()
+            setLogTerminal('Seu limite de movimento foi atingido', true)
+            return false
+        }
+        if (ON) {
+            setLogTerminal('Não pode ser movimentar durante o disparo', true)
+            return false
+        }
+        return true
+    },
+    moveRight() {
+        if (!this.stopAtLimitLeft()) return false
+        if (!this.allowed()) return false
+
+        console.log('aaa');
+
+        const shot_position = document.querySelector('div.shot--position')
+        shot_position.style.left = parseFloat(shot_position.style.left) + 1 + 'px'
+        shot_position.style.transform = "scaleX(1)"
+        this.PLAYERS_CURRENT_MOVEMENT++
+        this.updateMovimentBar()
+        this.startSoundEffect()
+    },
+    moveLeft() {
+        if (!this.stopAtLimitRight()) return false
+        if (!this.allowed()) return false
+        
+        const shot_position = document.querySelector('div.shot--position')
+        shot_position.style.left = parseFloat(shot_position.style.left) - 1 + 'px'
+        shot_position.style.transform = "scaleX(-1)"
+        this.PLAYERS_CURRENT_MOVEMENT++
+        this.updateMovimentBar()
+        this.startSoundEffect()
+    },
+    INTERVAL: null,
     movePlayer() {
-        document.addEventListener('keydown', (e) => {
-            const shot_position = document.querySelector('div.shot--position')
+        document.oncontextmenu = function() {return false};
+        document.querySelector('div.touch-movement-left').addEventListener('touchstart', (e) => {
+            const touch = e.touches[0]
+            this.INTERVAL = setInterval((_) => {this.moveLeft()}, 50)
+        })
+        document.querySelector('div.touch-movement-left').addEventListener('touchend', (e) => {
+            const touch = e.touches[0]
+            clearInterval(this.INTERVAL)
+        })
+
+        document.querySelector('div.touch-movement-right').addEventListener('touchstart', (e) => {
+            e.stopPropagation()
+            const touch = e.touches[0]
+            this.INTERVAL = setInterval((_) => {this.moveRight()}, 50)
+        })
+        document.querySelector('div.touch-movement-right').addEventListener('touchend', (e) => {
+            const touch = e.touches[0]
+            clearInterval(this.INTERVAL)
+        })
             
-            if (this.PLAYERS_CURRENT_MOVEMENT >= this.PLAYER_MOVIMENT_LIMITATION) {
-                this.stopSoundEffect()
-                return setLogTerminal('Seu limite de movimento foi atingido', true)
-            }
-            if (ON) return setLogTerminal('Não pode ser movimentar durante o disparo', true)
-    
-            if (e.code==='ArrowRight' && this.stopAtLimitLeft()) {
-                shot_position.style.left = parseFloat(shot_position.style.left) + 1 + 'px'
-                shot_position.style.transform = "scaleX(1)"
-                this.PLAYERS_CURRENT_MOVEMENT++
-                this.updateMovimentBar()
-                this.startSoundEffect()
-            }
-            if (e.code==='ArrowLeft' && this.stopAtLimitRight()) {
-                shot_position.style.left = parseFloat(shot_position.style.left) - 1 + 'px'
-                shot_position.style.transform = "scaleX(-1)"
-                this.PLAYERS_CURRENT_MOVEMENT++
-                this.updateMovimentBar()
-                this.startSoundEffect()
-            }
+        document.addEventListener('keydown', (e) => {
+            if (e.code==='ArrowRight') this.moveRight()
+            if (e.code==='ArrowLeft') this.moveLeft()
         })
         document.addEventListener('keyup', (e) => {
             if (e.code==='ArrowRight' || e.code==='ArrowLeft') this.ON = false
@@ -445,8 +538,8 @@ const PRICES = {
     BULLET: null,
     EXTRA_DAMAGE: null,
     reset() {
-        this.BULLET = 20
-        this.EXTRA_DAMAGE = 20
+        this.BULLET = 2
+        this.EXTRA_DAMAGE = 2
         this.bulletPriceUpdate()
         this.extraDamageUpdate()
     },
@@ -715,10 +808,13 @@ const SOUNDS = {
 
 const playSound = (sound, volume = 1.0, repeat = false) => {
     const audio = new Audio()
+    audio.preload = 'metadata'
     audio.src = `./audio/${sound}.mp3`
     audio.volume = volume
     audio.loop = repeat
     audio.play()
+    audio.onended = (_) => audio.remove()
+
     return audio
 }
 
@@ -1096,9 +1192,8 @@ const invalidPosition = (e) => {
     return false
 }
 
-const drawLine = () => {
-    document.querySelector('div.arena').addEventListener('mousemove', (e) => {
-        if (ON) return false
+const showLine = (e) => {
+    if (ON) return false
         if (MOVEMENT_PLAYER_CONTROLLER.ON) return false
         if (invalidPosition(e)) return false
 
@@ -1134,6 +1229,17 @@ const drawLine = () => {
         LINE.style.transform = `rotate(${ANGLE}deg)`
         
         ARENA.append(LINE)
+}
+
+const drawLine = () => {
+    document.querySelector('div.arena').addEventListener('touchmove', (e) => {
+        const touch = e.touches[0]
+        showLine(touch)
+    })
+
+
+    document.querySelector('div.arena').addEventListener('mousemove', (e) => {
+        showLine(e)
     })
 }
 
@@ -1282,12 +1388,20 @@ const gameOver = () => {
     }
 }
 
+LOGS = []
 const setLogTerminal = (log, error=false) => {
     const ul = document.querySelector('div.terminal ul')
     const li = document.createElement('li')
+
     li.innerText = 'home/DevsAndBugs> ' + log
     if (error) li.classList.add('log-error')
-    ul.append(li)
+    
+    LOGS.push(li)
+    LOGS = LOGS.slice(-7)
+    
+    ul.innerHTML = ''
+    LOGS.forEach(e => ul.append(e))
+
     ul.scrollTo({ left: 0, top: ul.scrollHeight, behavior: "smooth" });
 }
 

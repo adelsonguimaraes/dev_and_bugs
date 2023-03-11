@@ -153,6 +153,16 @@ body{
     transform: scale(1.2);
 }
 
+.shot--area > .touch-movement-left, .touch-movement-right {
+    width: 80px;
+    height: 100%;
+    background-color: #65d92f17;
+    position: absolute;
+    z-index: 1;
+}
+.shot--area > .touch-movement-left {left: 5px;}
+.shot--area > .touch-movement-right {right: 5px;}
+
 .shop {
     background-color: rgb(0 0 0 / 92%);
     position: fixed;
@@ -285,6 +295,16 @@ body{
     height: 10px;
     background-color: chartreuse;
     border-radius: 20px;
+}
+
+@media (max-width: 720px) {
+    .box {
+        overflow: hidden;
+    }
+    .shot--area > .shop-btn {
+        right: 8px;
+        top: 10px;
+    }
 }
 
 @keyframes shake {
