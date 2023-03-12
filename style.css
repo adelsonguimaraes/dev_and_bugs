@@ -8,6 +8,10 @@ html, body {
     overflow: hidden;
     scroll-behavior: smooth;
     transition: .5s;
+    -webkit-transform: scale(1);
+    -ms-transform: scale(1);
+    transform: scale(1);
+    zoom: 0.99;
 }
 .btn-play {
     position: fixed;

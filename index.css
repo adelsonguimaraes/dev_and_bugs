@@ -13,6 +13,10 @@
 }
 body{
     background-color: rgb(31, 31, 31);
+    -webkit-transform: scale(1);
+    -ms-transform: scale(1);
+    transform: scale(1);
+    zoom: 0.99;
     /* box-sizing: border-box; */
 }
 .box {
