@@ -464,8 +464,6 @@ const MOVEMENT_PLAYER_CONTROLLER = {
         if (!this.stopAtLimitLeft()) return false
         if (!this.allowed()) return false
 
-        console.log('aaa');
-
         const shot_position = document.querySelector('div.shot--position')
         shot_position.style.left = parseFloat(shot_position.style.left) + 1 + 'px'
         shot_position.style.transform = "scaleX(1)"
@@ -1184,7 +1182,7 @@ const createTestElement = (x, y) => {
 const invalidPosition = (e) => {
     const arena_rect = document.querySelector('div.arena').getBoundingClientRect()
 
-    if ((e.pageX <= arena_rect.x || e.pageX >= (arena_rect.x + arena_rect.width)) 
+    if ((e.pageX <= arena_rect.x || e.pageX >= (arena_rect.x + arena_rect.width))
         || (e.pageY >= (arena_rect.y + arena_rect.height)) || (e.pageY <= arena_rect.y)) {
             document.body.style.cursor = 'not-allowed'
             return true
@@ -1248,42 +1246,54 @@ const setBulletPosition = (b, x=null, y=null) => {
     if (y!=null) b.style.top = y + 'px'
 }
 
+const execShoot = (e) => {
+    
+    security()
+    removeAllBullets()
+    
+    const arena_rect = document.querySelector('div.arena').getBoundingClientRect()
+    const spr = document.querySelector('div.shot--position').getBoundingClientRect()
+    
+    
+    let x = e.pageX - spr.x - (spr.width/2) - (BULLET_SIZE/2)
+    let y = e.pageY - spr.y - (spr.height/2) - (BULLET_SIZE/2)
+    
+    let l = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2))
+    
+    x = (x / l)
+    y = (y / l)
+
+    const bx = (spr.x + (spr.width/2) - (BULLET_SIZE/2) - arena_rect.x)
+    const by =  (spr.y - arena_rect.y)
+    
+    renderBullet(bx, by)
+    
+    BULLET_DISPLACEMENT_X = (x * VELOCITY)
+    BULLET_DISPLACEMENT_Y = (y * VELOCITY)
+    
+    INTERVAL = setInterval(shiftBullet)
+    
+    ON = true
+    
+    if (LINE) LINE.remove()
+    
+    setLogTerminal("Disparo realizado")
+}
+
 const shoot = () => {
-    document.body.addEventListener('click', (e) => {
+    document.querySelector('div.arena').addEventListener('touchstart', (e) => {
+        const touch = e.touches[0]
+        if (invalidPosition(touch)) return setLogTerminal('Posição inválida para atirar', true)
+        
+        if (!ON) execShoot(touch)
+
+        return
+    })
+
+    document.querySelector('div.arena').addEventListener('click', (e) => {
         if (invalidPosition(e)) return setLogTerminal('Posição inválida para atirar', true)
         
-        if (!ON) {
-            security()
-            removeAllBullets()
-            
-            const arena_rect = document.querySelector('div.arena').getBoundingClientRect()
-            const spr = document.querySelector('div.shot--position').getBoundingClientRect()
-
-
-            let x = e.x - spr.x - (spr.width/2) - (BULLET_SIZE/2)
-            let y = e.y - spr.y - (spr.height/2) - (BULLET_SIZE/2)
-
-            let l = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2))
-
-            x = (x / l)
-            y = (y / l)
-
-            const bx = (spr.x + (spr.width/2) - (BULLET_SIZE/2) - arena_rect.x)
-            const by =  (spr.y - arena_rect.y)
-            
-            renderBullet(bx, by)
-
-            BULLET_DISPLACEMENT_X = (x * VELOCITY)
-            BULLET_DISPLACEMENT_Y = (y * VELOCITY)
-
-            INTERVAL = setInterval(shiftBullet)
-
-            ON = true
-
-            LINE.remove()
-
-            setLogTerminal("Disparo realizado")
-        }
+        if (!ON) execShoot(e)
     })
 }
 
@@ -1431,7 +1441,45 @@ const startTheme = () => {
 
 const initShootPosition = () => document.querySelector('div.shot--position').style.left = '160px'
 
+const welcome = () => {
+    const welcome = document.createElement('div')
+    welcome.style.width = '100%'
+    welcome.style.height  = '100vh'
+    welcome.style.backgroundColor = '#000000de'
+    welcome.style.position = 'absolute'
+    welcome.style.zIndex = '10'
+    welcome.style.display = 'flex'
+    welcome.style.justifyContent = 'center'
+    welcome.style.alignItems = 'center'
+
+    const panel = document.createElement('div')
+    panel.style.width = '200px'
+    panel.style.height = '200px'
+    panel.style.border = '1px solid white'
+    panel.style.color = 'white'
+    panel.style.textAlign = 'center'
+    panel.style.padding = '10px'
+    panel.innerHTML = "<p>Bem vindo</p>"
+    panel.innerHTML += "<br>"
+    panel.innerHTML += "<p>Jogo em desenvolvimento</p>"
+    panel.innerHTML += "<br>"
+    panel.innerHTML += "<p>Boa diversão :)</p>"
+    panel.innerHTML += "<br>"
+    panel.innerHTML += "<button id='iniciar' style='padding:5px 8px;'>Iniciar</button>"
+
+    welcome.append(panel)
+
+    document.body.append(welcome)
+
+    document.querySelector('button#iniciar').addEventListener('click', (_) => {
+        welcome.remove()
+        playSound(SOUNDS.THEME, 0.2, true)
+    })
+}
+
 document.addEventListener("DOMContentLoaded", (_) => {
+    welcome()
+
     initShootPosition()
     MOVEMENT_PLAYER_CONTROLLER.reset()
     MOVEMENT_PLAYER_CONTROLLER.movePlayer()
