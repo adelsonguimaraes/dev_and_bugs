@@ -3,62 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <link rel="stylesheet" href="index.css">
-    <title>Document</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devs and Bugs</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="box">
-        <div class="info">
-            <div class="title">Dev's and Bug's</div>
-            <div class="level"></div>
-            <div class="points"></div>
+    <a href="game.html" class="btn-play">Jogar</a>
+    <section class="page" id="page1">
+        <div class="left">
+            <div class="title">DEV’s and BUG’s</div>
+            <p>Os bugs estão se espalhando por toda a aplicação e precisam ser eliminados</p>
+            <p>Neste jogo que mistura sobrevivência, defesa e tiro, é preciso resistir a dominação dos bugs e eliminá-los antes que dominem toda a aplicação</p>
+            <p>Avance pelos leveis encontre a origem dos bugs e elimine</p>
         </div>
-        <div class="arena"></div>
-        <div class="shot--area">
-            <div class="touch-movement-left"></div>
-            <div class="touch-movement-right"></div>
-            <div class="shot--position">
-                <div class="movement-bar"></div>
-            </div>
-            <div class="shop-btn"></div>
-            <div class="play-stop-music"></div>
-            <div class="btn-reset-game"></div>
+        <div class="right">
+            <img src="./img/image_page1.svg" width="500px" alt="" srcset="">
         </div>
-        <div class="terminal">
-            <div class="title">>_ Terminal</div>
-            <ul>
-                <!-- <li>home/Devs&Bugs> Jogo iniciado</li> -->
-            </ul>
+        <a href="#page2" class="next">
+            <div></div>
+        </a>
+    </section>
+    <section class="page" id="page2">
+        <a href="#page1" class="prev">
+            <div></div>
+        </a>
+        <div class="left">
+            <div class="title">Jogabilidade</div>
+            <p>Aponte o mouse em um local da arena para posicionar a mira</p>
+            <p>Clique com o mouse ou toque na tela para efetuar um disparo</p>
+            <p>Perceba que a bala pode rebater nas parede e nos bugs, use isso a seu favor</p>
+            <p>Mova o personagem horizontalmente com as setas ou tocando nas áreas verdes na tela</p>
         </div>
-    </div>
-
-    <div class="shop">
-        <div class="close-shop-btn">x</div>
-        <div class="points">Points: 0</div>
-        <ul class="shop-list">
-            <li>
-                <div class="title">Item</div>
-                <div class="value">Price</div>
-                <div class="action-header"></div>
-            </li>
-            <li class="shop-item-bullet">
-                <div class="title">Bullet</div>
-                <div class="value"><!--100 Points--></div>
-                <div class="action">Pay</div>
-            </li>
-            <li class="shop-item-extra-damage">
-                <div class="title">Extra Damage</div>
-                <div class="value"><!--200 Points--></div>
-                <div class="action">Pay</div>
-            </li>
-        </ul>
-        <div class="equipment">
-            <div class="bullets"><!--Bullets: 1--></div>
-            <div class="extra-damage"><!--Damage: 50%(exta: 0%)--></div>
+        <div class="right">
+            <img src="./img/image_page2.svg" width="500px" alt="" srcset="">
         </div>
-    </div>
-
-    <script src="index.js"></script>
+        <a href="#page3" class="next">
+            <div></div>
+        </a>
+    </section>
+    <section class="page" id="page3">
+        <a href="#page2" class="prev">
+            <div></div>
+        </a>
+        <div class="left">
+            <div class="title">Balas</div>
+            <p>As balas são acumulativas e podem ser adquiridas na lojinha do jogo</p>
+            <p>Há 4 modos de bala, ativados automaticamente por quantidade de colisões</p>
+            <p>Normal na cor verde,  Moderado cor amarela, Alto cor vermelha e insano que causa um filtro negativo em toda arena</p>
+            <p>Quanto maior o nível atingido, mais pontos são contabilizados por colisão em bugs</p>
+        </div>
+        <div class="right">
+            <img src="./img/image_page3.svg" width="500px" alt="" srcset="">
+        </div>
+        <a href="#page4" class="next">
+            <div></div>
+        </a>
+    </section>
+    <section class="page" id="page4">
+        <a href="#page3" class="prev">
+            <div></div>
+        </a>
+        <div class="left">
+            <div class="title">Bugs</div>
+            <p>Bugs surgem de forma aleatória a cada level, e também ficam mais fortes</p>
+            <p>As cores vão se alterando junto a força dos bugs o que ocorre a cada novo level</p>
+            <p>Existem bugs diferentes que tem efeitos diferentes como ficar oculto entre os leveis ou se multiplicar ao ser morto</p>
+            <p>Bugs não atacam, mas são resistentes e se espalham rápido</p>
+        </div>
+        <div class="right">
+            <img src="./img/image_page4.svg" width="500px" alt="" srcset="">
+        </div>
+        <a href="#page5" class="next">
+            <div></div>
+        </a>
+    </section>
+    <section class="page" id="page5">
+        <a href="#page4" class="prev">
+            <div></div>
+        </a>
+        <div class="left">
+            <div class="title">Damage, Critical e Perfect</div>
+            <p>O dano extra pode ser adquirido na lojinha utilizando os pontos</p>
+            <p>Aumentando o dano também aumenta a chance de dano crítico que aumenta o dano 3x</p>
+            <p>Quando em um disparo todos os bugs da arena são eliminados é considerado o perfect, drobando os pontos atuais</p>
+        </div>
+        <div class="right">
+            <img src="./img/image_page5.svg" width="500px" alt="" srcset="">
+        </div>
+        <a href="#page6" class="next">
+            <div></div>
+        </a>
+    </section>
+    <section class="page" id="page6">
+        <a href="#page5" class="prev">
+            <div></div>
+        </a>
+        <div class="left">
+            <div class="title">Dungeons e Bosses</div>
+            <p>As Dungeons possuem uma cor que afeta a arena representando o local</p>
+            <p>Ocorrem a cada 50 leveis, por isso é preciso resistir e fazer boas jogadas</p>
+            <p>Também encontramos os bosses, e a cada dungeon eles ficam mais difíceis</p>
+            <p>Durante uma batalha na dungeon o level fica congelado até o boss ser derrotado</p>
+        </div>
+        <div class="right">
+            <img src="./img/image_page6.svg" width="500px" alt="" srcset="">
+        </div>
+        <a href="#page7" class="next">
+            <div></div>
+        </a>
+    </section>
+    <section class="page" id="page7">
+        <a href="#page6" class="prev">
+            <div></div>
+        </a>
+        <div class="left">
+            <div class="title">Loja e Pontos</div>
+            <p>A lojinha é onde é possível adquirir mais balas e danos extras</p>
+            <p>Os pontos são ganhos a cada dano causado em um bug, aumentados com os modos de bala e duplicados em caso de perfect</p>
+            <p>Cada item da loja custa uma quantidade de pontos e o valor de custo vai aumento quando os itens vão sendo comprados</p>
+        </div>
+        <div class="right">
+            <img src="./img/image_page7.svg" width="500px" alt="" srcset="">
+        </div>
+    </section>
 </body>
 </html>

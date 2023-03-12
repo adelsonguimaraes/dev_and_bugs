@@ -211,41 +211,40 @@ const BOSS_CONTROLLER = {
             const dungeon = DUNGEONS.getByLevel(LEVEL)
 
             showLevel('Dungeon ' + dungeon.NAME)
-            // THEME_ON = playSound(SOUNDS.BOSS_BATTLE, 0.2, true)
+            if (THEME_ON != null) THEME_ON.pause()
+            THEME_ON = playSound(SOUNDS.BOSS_BATTLE, 0.5, true)
 
-            // setTimeout(() => {
-                this.removeMobs()
+            this.removeMobs()
 
-                const slot =  document.querySelector("li#slot_20").getBoundingClientRect()
-                const boss_area = document.createElement('div')
-                const ar = document.querySelector('div.arena').getBoundingClientRect()
-                boss_area.style.width = (GRID_SIZE*2) + 'px'
-                boss_area.style.height = (GRID_SIZE*2) + 'px'
-                // boss_area.style.backgroundColor = 'orange'
-                boss_area.style.position = 'absolute'
-                boss_area.style.left = (slot.x - ar.x) + 'px'
-                boss_area.style.top = (slot.y - ar.y) + 'px'
-                boss_area.style.backgroundImage = "url("+ dungeon.BOSS +")"
-                boss_area.style.backgroundSize = '80% 80%'
-                boss_area.style.backgroundRepeat = 'no-repeat'
-                boss_area.style.backgroundPosition = 'center'
-                boss_area.style.display = 'flex'
-                boss_area.style.justifyContent = 'center';
-                // boss_area.style.opacity = '0.2'
-                
-                const bl = this.showBossLife()
-                boss_area.append(bl)
+            const slot =  document.querySelector("li#slot_20").getBoundingClientRect()
+            const boss_area = document.createElement('div')
+            const ar = document.querySelector('div.arena').getBoundingClientRect()
+            boss_area.style.width = (GRID_SIZE*2) + 'px'
+            boss_area.style.height = (GRID_SIZE*2) + 'px'
+            // boss_area.style.backgroundColor = 'orange'
+            boss_area.style.position = 'absolute'
+            boss_area.style.left = (slot.x - ar.x) + 'px'
+            boss_area.style.top = (slot.y - ar.y) + 'px'
+            boss_area.style.backgroundImage = "url("+ dungeon.BOSS +")"
+            boss_area.style.backgroundSize = '80% 80%'
+            boss_area.style.backgroundRepeat = 'no-repeat'
+            boss_area.style.backgroundPosition = 'center'
+            boss_area.style.display = 'flex'
+            boss_area.style.justifyContent = 'center';
+            // boss_area.style.opacity = '0.2'
+            
+            const bl = this.showBossLife()
+            boss_area.append(bl)
 
-                this.ELEMENT = boss_area
-                this.ON = true
+            this.ELEMENT = boss_area
+            this.ON = true
+            
+            this.LIFE = (MOB_LIFE + (MOB_LIFE*MOB_LIFE_INCREMENT/100))
+            this.LIFE *= dungeon.MULTIPLIER
+            
+            ARENA.append(boss_area)
+            ARENA.style.backgroundColor = dungeon.BG
                 
-                this.LIFE = (MOB_LIFE + (MOB_LIFE*MOB_LIFE_INCREMENT/100))
-                this.LIFE *= dungeon.MULTIPLIER
-                
-                ARENA.append(boss_area)
-                ARENA.style.backgroundColor = dungeon.BG
-                
-            // }, 50);
         }
     },
     showBossLife() {
@@ -281,8 +280,9 @@ const BOSS_CONTROLLER = {
             this.reset()
             playSound(SOUNDS.BUG_FINISH, 1.0)
             setLogTerminal("Boss derrotado!!!!")
-            // THEME_ON.pause()
-            // THEME_ON = null
+            
+            THEME_ON.pause()
+            THEME_ON = playSound(SOUNDS.THEME, 0.2, true)
 
         }else{
             playSound(SOUNDS.SHOOT_COLISION, 1.0)
@@ -1421,23 +1421,23 @@ const terminalClear = () => {
 }
 
 THEME_ON = null
-const startTheme = () => {
-    const btn = document.querySelector('div.shot--area > div.play-stop-music')
-    btn.addEventListener('click', (_) => {
-        if (THEME_ON!=null) {
-            if (THEME_ON.paused) {
-                THEME_ON.play()
-                return setLogTerminal('Música tocando', true);
-            } else{
-                THEME_ON.pause()
-                setLogTerminal('Música em pausa', true);
-            }
-            return 
-        }
-        THEME_ON=playSound(SOUNDS.THEME, 0.05, true)
-        setLogTerminal('Música do jogo iniciada, aproveite.', true);
-    })
-}
+// const startTheme = () => {
+//     const btn = document.querySelector('div.shot--area > div.play-stop-music')
+//     btn.addEventListener('click', (_) => {
+//         if (THEME_ON!=null) {
+//             if (THEME_ON.paused) {
+//                 THEME_ON.play()
+//                 return setLogTerminal('Música tocando', true);
+//             } else{
+//                 THEME_ON.pause()
+//                 setLogTerminal('Música em pausa', true);
+//             }
+//             return 
+//         }
+//         THEME_ON=playSound(SOUNDS.THEME, 0.05, true)
+//         setLogTerminal('Música do jogo iniciada, aproveite.', true);
+//     })
+// }
 
 const initShootPosition = () => document.querySelector('div.shot--position').style.left = '160px'
 
@@ -1473,7 +1473,7 @@ const welcome = () => {
 
     document.querySelector('button#iniciar').addEventListener('click', (_) => {
         welcome.remove()
-        playSound(SOUNDS.THEME, 0.2, true)
+        THEME_ON = playSound(SOUNDS.THEME, 0.2, true)
     })
 }
 
@@ -1485,7 +1485,7 @@ document.addEventListener("DOMContentLoaded", (_) => {
     MOVEMENT_PLAYER_CONTROLLER.movePlayer()
     SYSTEM_CONTROLLER.reset()
 
-    startTheme()
+    // startTheme()
 
     ARENA = document.querySelector('.arena')
     arena_rect = ARENA.getBoundingClientRect()

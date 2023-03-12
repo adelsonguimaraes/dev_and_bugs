@@ -17,13 +17,16 @@ body{
 }
 .box {
     width: 100%;
-    /* height: 100vh; */
+    height: 100vh;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     cursor: not-allowed;
     position: absolute;
+    background-image: url(img/bg.svg);
+    background-size: 105%;
+    background-position: center;
 }
 
 .box > .info {
