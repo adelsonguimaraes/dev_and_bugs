@@ -14,7 +14,7 @@ html, body {
     zoom: 0.99;
 }
 .btn-play {
-    position: fixed;
+    position: absolute;
     right: 40px;
     top: 30px;
     padding: 5px;
@@ -142,11 +142,13 @@ p {
 
 @media (max-width: 720px) {
     .btn-play {
-        right: 0;
-        top: 0;
-        font-size: 25px;
-        width: 128px;
-        height: 60px;
+        right: 10px;
+        top: 15px;
+        font-size: 16px;
+        width: 80px;
+        height: 40px;
+        background-color: transparent;
+        border: 1px solid white;
     }
     .page {
         flex-direction: column;
