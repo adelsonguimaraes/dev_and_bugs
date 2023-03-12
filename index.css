@@ -181,7 +181,7 @@ body{
 .shop > .close-shop-btn {
     width: 20px;
     height: 20px;
-    padding: 5px;
+    padding: 15px;
     border-radius: 20px;
     background-color: aliceblue;
     position: absolute;
@@ -307,8 +307,18 @@ body{
     .shot--area > .shop-btn {
         right: 8px;
         z-index: 3;
-        top: 124px;
+        top: 100px;
     }
+    .shot--area > .play-stop-music {
+        display: none;
+    }
+
+    .shot--area > .btn-reset-game {
+        right: 8px;
+        z-index: 3;
+        top: 140px;
+    }
+
     .shot--area > .touch-movement-left, .touch-movement-right {
         display: block;
     }
