@@ -309,11 +309,12 @@ html, body{
 }
 
 @media (max-width: 720px) {
-    /* html, body{
+    html, body{
         -webkit-transform: scale(1.0);
         -ms-transform: scale(1.0);
         transform: scale(1.0);
-    } */
+        zoom: 0.97;
+    }
     .box {
         overflow: hidden;
     }
