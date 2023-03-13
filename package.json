@@ -1,0 +1,24 @@
+{
+  "name": "game",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "npx ts-node ./src",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adelsonguimaraes/dev_and_bugs.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/adelsonguimaraes/dev_and_bugs/issues"
+  },
+  "homepage": "https://github.com/adelsonguimaraes/dev_and_bugs#readme",
+  "devDependencies": {
+    "ts-node": "^10.9.1"
+  }
+}
