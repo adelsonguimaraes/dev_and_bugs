@@ -1,3 +1,8 @@
+const SOCKET = io('/')
+MY_SOCKET_ID = null
+MY_TURN = true
+MULTIPLAYER = false
+
 const MOB_EFFECTS = {
     PHANTOM: 'phantom',
     DIVIDE: 'divide',
@@ -7,6 +12,9 @@ const MOB_EFFECTS = {
         COLISION: 'colision'
     },
     EVENT: null,
+    reset() {
+        this.EVENT = null
+    },
     phantomEffect() {
         const phantoms = this.listMobsPhantoms()
 
@@ -55,6 +63,7 @@ const MOB_EFFECTS = {
 
 const MOBS = [
     {
+        ID: 1,
         NAME: 'Demon',
         IMG: 'https://media.tenor.com/gFvc0poigIYAAAAM/demon-red.gif',
         COLISIONS: {LEFT: true, RIGHT: true, TOP: true, BOTTOM: true},
@@ -64,6 +73,7 @@ const MOBS = [
         ALERT: false
     },
     {
+        ID: 2,
         NAME: 'Bat',
         IMG: 'https://i.gifer.com/origin/ce/ce1c245954005ac923e3cea5f70518df_w200.gif',
         COLISIONS: {LEFT: true, RIGHT: true, TOP: true, BOTTOM: true},
@@ -73,6 +83,7 @@ const MOBS = [
         ALERT: false
     },
     {
+        ID: 3,
         NAME: 'Slime',
         IMG: 'https://media.tenor.com/mgZBc6GhNlUAAAAC/game-pixel-art.gif',
         COLISIONS: {LEFT: true, RIGHT: true, TOP: true, BOTTOM: true},
@@ -82,6 +93,7 @@ const MOBS = [
         ALERT: false
     },
     {
+        ID: 4,
         NAME: 'Big Slime',
         IMG: 'https://media.tenor.com/DuJ4EA8BUVUAAAAC/slime-pixel-art.gif',
         COLISIONS: {LEFT: true, RIGHT: true, TOP: true, BOTTOM: true},
@@ -91,6 +103,7 @@ const MOBS = [
         ALERT: false
     },
     {
+        ID: 5,
         NAME: 'Sonolento',
         IMG: './img/sonolento.gif',
         COLISIONS: {LEFT: true, RIGHT: true, TOP: true, BOTTOM: true},
@@ -400,8 +413,10 @@ const MOVEMENT_PLAYER_CONTROLLER = {
     },
     restarPositionPlayer() {
         const shot_position = document.querySelector('div.shot--position')
+        const player_name = document.querySelector('div.player-name')
         shot_position.style.left = '160px';
         shot_position.style.transform = 'scaleX(1)';
+        player_name.style.transform = 'scaleX(1)'
     },
     updateMovimentBar () {
         const bar = document.querySelector('div.movement-bar')
@@ -465,8 +480,10 @@ const MOVEMENT_PLAYER_CONTROLLER = {
         if (!this.allowed()) return false
 
         const shot_position = document.querySelector('div.shot--position')
+        const player_name = document.querySelector('div.player-name')
         shot_position.style.left = parseFloat(shot_position.style.left) + 1 + 'px'
         shot_position.style.transform = "scaleX(1)"
+        player_name.style.transform = "scaleX(1)"
         this.PLAYERS_CURRENT_MOVEMENT++
         this.updateMovimentBar()
         this.startSoundEffect()
@@ -476,8 +493,10 @@ const MOVEMENT_PLAYER_CONTROLLER = {
         if (!this.allowed()) return false
         
         const shot_position = document.querySelector('div.shot--position')
+        const player_name = document.querySelector('div.player-name')
         shot_position.style.left = parseFloat(shot_position.style.left) - 1 + 'px'
         shot_position.style.transform = "scaleX(-1)"
+        player_name.style.transform = "scaleX(-1)"
         this.PLAYERS_CURRENT_MOVEMENT++
         this.updateMovimentBar()
         this.startSoundEffect()
@@ -523,7 +542,7 @@ MOB_LIFE_INCREMENT = 3
 MOB_HUE_ROTATE = "0.0"
 
 
-VELOCITY = 3
+VELOCITY = 0.5
 
 const VELOCITY_MODES = {
     NORMAL: null,
@@ -543,12 +562,12 @@ const PRICES = {
     },
     bulletPriceUpdate() {
         const value = document.querySelector('li.shop-item-bullet div.value')
-        PRICES.BULLET = (PRICES.BULLET*TOTAL_BULLETS)
+        if (LEVEL>1) PRICES.BULLET = (PRICES.BULLET*TOTAL_BULLETS)
         value.innerHTML = PRICES.BULLET + ' Points'
     },
     extraDamageUpdate() {
         const value = document.querySelector('li.shop-item-extra-damage div.value')
-        PRICES.EXTRA_DAMAGE = (EXTRA_DAMAGE>0) ? (PRICES.EXTRA_DAMAGE*EXTRA_DAMAGE) : PRICES.EXTRA_DAMAGE
+        if (LEVEL>1) PRICES.EXTRA_DAMAGE = (EXTRA_DAMAGE>0) ? (PRICES.EXTRA_DAMAGE*EXTRA_DAMAGE) : PRICES.EXTRA_DAMAGE
         value.innerHTML = PRICES.EXTRA_DAMAGE + ' Points'
     }
 }
@@ -625,7 +644,7 @@ const shop = () => {
         if (POINTS >= PRICES.EXTRA_DAMAGE) {
             
             POINTS -= PRICES.EXTRA_DAMAGE
-            EXTRA_DAMAGE++
+            EXTRA_DAMAGE+=5
             
             PRICES.extraDamageUpdate()
             setExtraDamage(EXTRA_DAMAGE)
@@ -791,6 +810,11 @@ const renderBullet = (x, y) => {
         CURRENT_BULLETS++
         const a = playSound(SOUNDS.SHOOT, 1.0)
     }, 200)
+
+    INTERVAL = setInterval(shiftBullet)
+    ON = true
+    if (LINE) LINE.remove()
+    setLogTerminal("Disparo realizado")
 }
 
 const SOUNDS = {
@@ -1114,10 +1138,23 @@ const validateFinalGame = () => {
     return ((total>=ARENA_GRIDS.length) || (total>=(ARENA_GRIDS.length-4) && BOSS_CONTROLLER.ON))
 }
 
-const dropCreature = (mob_raffle) => {
+const updateMobsInGrid = (bugs) => {
+    for (g of ARENA_GRIDS) {
+        g.grid.innerHTML = ''
+        
+        const bug = bugs.find(e => (e.slotId.toString() == g.grid.id.toString()))
+        if (bug.bugId) {
+            const mobData = MOBS.find(e => e.id == bug.mobId)
+            dropCreature(mobData, bug)
+        }
+    }
+}
+
+const dropCreature = (mob_raffle, data=null) => {
     if (validateFinalGame()) return false
 
-    const pos = Math.floor(Math.random() * ARENA_GRIDS.length)
+    const pos = (data) ? ARENA_GRIDS.findIndex(e => e.grid.id == data.slotId) : Math.floor(Math.random() * ARENA_GRIDS.length)
+    
     const mob = document.createElement('div')
     const life = document.createElement('div')
     const grid_rect = ARENA_GRIDS[pos]['grid'].getBoundingClientRect()
@@ -1134,10 +1171,11 @@ const dropCreature = (mob_raffle) => {
     mob.style.backgroundColor = 'yellow'
     mob.style.backgroundSize = 'cover'
     mob.style.backgroundImage = `url(${mob_raffle.IMG})`
-    mob.dataset.effect = mob_raffle.EFFECT
-    mob.dataset.effectActive = false
+    mob.dataset.mobId = mob_raffle.ID
+    mob.dataset.effect = (data) ? data.effect : mob_raffle.EFFECT
+    mob.dataset.effectActive = (data) ? data.effectActive : false
     
-    life.style.width = 100 + '%'
+    life.style.width = (data) ? data.life : 100 + '%'
     life.style.height = 6 + 'px'
     life.style.backgroundColor = 'red'
     life.id = 'life'
@@ -1229,15 +1267,43 @@ const showLine = (e) => {
         ARENA.append(LINE)
 }
 
+const preShowLine = (e) => {
+    if (MY_SOCKET_ID!=null) {
+        const bc = document.querySelector('div.arena').getBoundingClientRect()
+
+        SOCKET.emit('draw-line', {
+            'pageW':window.innerWidth,
+            'pageH':window.innerHeight,
+            'pageX':e.pageX, 'pageY': e.pageY
+        })
+    }
+    showLine(e)
+}
+
 const drawLine = () => {
     document.querySelector('div.arena').addEventListener('touchmove', (e) => {
         const touch = e.touches[0]
-        showLine(touch)
+        if (!MY_TURN) return false
+        preShowLine(touch)
+    })
+    
+    
+    document.querySelector('div.arena').addEventListener('mousemove', (e) => {
+        if (!MY_TURN) return false
+        preShowLine(e)
     })
 
+    SOCKET.on('draw-line-partner', (data) => {
+        // calculation relative position
+        const bc = document.body.getBoundingClientRect()
 
-    document.querySelector('div.arena').addEventListener('mousemove', (e) => {
-        showLine(e)
+        let pageY = (data.pageY*window.innerHeight)/data.pageH
+        let pageX = (data.pageX*window.innerWidth)/data.pageW
+        const xy = {
+            pageY: pageY,
+            pageX: pageX
+        }
+        showLine(xy)
     })
 }
 
@@ -1247,7 +1313,6 @@ const setBulletPosition = (b, x=null, y=null) => {
 }
 
 const execShoot = (e) => {
-    
     security()
     removeAllBullets()
     
@@ -1267,7 +1332,7 @@ const execShoot = (e) => {
     const by =  (spr.y - arena_rect.y)
     
     renderBullet(bx, by)
-    
+
     BULLET_DISPLACEMENT_X = (x * VELOCITY)
     BULLET_DISPLACEMENT_Y = (y * VELOCITY)
     
@@ -1280,20 +1345,47 @@ const execShoot = (e) => {
     setLogTerminal("Disparo realizado")
 }
 
-const shoot = () => {
-    document.querySelector('div.arena').addEventListener('touchstart', (e) => {
-        const touch = e.touches[0]
-        if (invalidPosition(touch)) return setLogTerminal('Posição inválida para atirar', true)
-        
-        if (!ON) execShoot(touch)
+const preShoot = (e) => {
+    if (MY_SOCKET_ID!=null) {
+        SOCKET.emit('shooting', {
+            'pageW':document.body.offsetWidth,
+            'pageH':document.body.offsetHeight,
+            'pageX':e.pageX, 'pageY': e.pageY
+        })
+    }else{
+        execShoot(e)
+    }
+}
 
-        return
-    })
+const shoot = () => {
+    // document.querySelector('div.arena').addEventListener('touchstart', (e) => {
+    //     const touch = e.touches[0]
+    //     if (invalidPosition(touch)) return setLogTerminal('Posição inválida para atirar', true)
+
+    //     if  (!ON && MY_TURN) return preShoot(touch)
+    // })
 
     document.querySelector('div.arena').addEventListener('click', (e) => {
         if (invalidPosition(e)) return setLogTerminal('Posição inválida para atirar', true)
         
-        if (!ON) execShoot(e)
+        if (!ON && MY_TURN) return preShoot(e)
+    })
+
+    SOCKET.on('shooting-partner', (data) => {
+        // calculation relative position
+        const xy = {
+            pageY: data.pageCoords.pageY*document.body.offsetHeight/data.pageCoords.pageH,
+            pageX: data.pageCoords.pageX*document.body.offsetWidth/data.pageCoords.pageW
+        }
+
+        execShoot(xy)
+        setPlayer(data.party)
+    })
+
+    SOCKET.on('shooting-response', (data) => {
+        const xy = {'pageX':data.pageCoords.pageX, 'pageY': data.pageCoords.pageY}
+        execShoot(xy)
+        setPlayer(data.party)
     })
 }
 
@@ -1315,29 +1407,32 @@ const MOB_DROP_AMOUNTS = {
         this.ALERTS.LEVEL_100 = false
     },
     changeDrops() {
-        if (LEVEL>=this.LEVEL_0.min && LEVEL<=this.LEVEL_0.max) {
+        if (LEVEL == 1) {
             sequenceDropCreature(this.LEVEL_0.drops)
-            if (!this.ALERTS.LEVEL_0) setLogTerminal(`Level incial, dropando ${this.LEVEL_0.drops} bugs por level`, true)
-            this.ALERTS.LEVEL_0 = true
-        
-        }else if (LEVEL>=this.LEVEL_30.min && LEVEL<=this.LEVEL_30.max){
-            sequenceDropCreature(this.LEVEL_30.drops)
-            if (!this.ALERTS.LEVEL_30) setLogTerminal(`Level ${this.LEVEL_30.min}, dropando ${this.LEVEL_30.drops} bugs por level`, true)
-            this.ALERTS.LEVEL_30 = true
-
         }
-        else if (LEVEL>=this.LEVEL_50.min && LEVEL<=this.LEVEL_50.max) {
-            sequenceDropCreature(this.LEVEL_50.drops)
-            if (!this.ALERTS.LEVEL_50) setLogTerminal(`Level ${this.LEVEL_50.min}, dropando ${this.LEVEL_50.drops} bugs por level`, true)
-            this.ALERTS.LEVEL_50 = true
+        // if (LEVEL>=this.LEVEL_0.min && LEVEL<=this.LEVEL_0.max) {
+        //     sequenceDropCreature(this.LEVEL_0.drops)
+        //     if (!this.ALERTS.LEVEL_0) setLogTerminal(`Level incial, dropando ${this.LEVEL_0.drops} bugs por level`, true)
+        //     this.ALERTS.LEVEL_0 = true
+        
+        // }else if (LEVEL>=this.LEVEL_30.min && LEVEL<=this.LEVEL_30.max){
+        //     sequenceDropCreature(this.LEVEL_30.drops)
+        //     if (!this.ALERTS.LEVEL_30) setLogTerminal(`Level ${this.LEVEL_30.min}, dropando ${this.LEVEL_30.drops} bugs por level`, true)
+        //     this.ALERTS.LEVEL_30 = true
+
+        // }
+        // else if (LEVEL>=this.LEVEL_50.min && LEVEL<=this.LEVEL_50.max) {
+        //     sequenceDropCreature(this.LEVEL_50.drops)
+        //     if (!this.ALERTS.LEVEL_50) setLogTerminal(`Level ${this.LEVEL_50.min}, dropando ${this.LEVEL_50.drops} bugs por level`, true)
+        //     this.ALERTS.LEVEL_50 = true
         
 
-        }else if (LEVEL>=this.LEVEL_100.min && LEVEL<=this.LEVEL_100.max) {
-            sequenceDropCreature(this.LEVEL_100.drops)
-            if (!this.ALERTS.LEVEL_100) setLogTerminal(`Level ${this.LEVEL_100.min}, dropando ${this.LEVEL_100.drops} bugs por level`, true)
-            this.ALERTS.LEVEL_100 = true
+        // }else if (LEVEL>=this.LEVEL_100.min && LEVEL<=this.LEVEL_100.max) {
+        //     sequenceDropCreature(this.LEVEL_100.drops)
+        //     if (!this.ALERTS.LEVEL_100) setLogTerminal(`Level ${this.LEVEL_100.min}, dropando ${this.LEVEL_100.drops} bugs por level`, true)
+        //     this.ALERTS.LEVEL_100 = true
 
-        }
+        // }
     }
 }
 
@@ -1375,6 +1470,7 @@ const reset = () => {
     MOB_LIFE_INCREMENT=3
     MOB_HUE_ROTATE="0.0"
     BOSS_CONTROLLER.reset()
+    MOB_EFFECTS.reset()
     setPoints(POINTS)
     createArenaGrid()
     levelUpdate()
@@ -1384,6 +1480,8 @@ const reset = () => {
     MOB_DROP_AMOUNTS.reset()
     MOVEMENT_PLAYER_CONTROLLER.restarPositionPlayer()
     ARENA.style.backgroundColor = '#373737'
+    THEME_ON.pause()
+    THEME_ON = playSound(SOUNDS.THEME, 0.2, true)
 }
 
 const gameOver = () => {
@@ -1439,9 +1537,150 @@ THEME_ON = null
 //     })
 // }
 
+const setPlayer = (data) => {
+    const current_player = data.users[data.current_player]
+    MY_TURN = (current_player.socketId==MY_SOCKET_ID)
+        
+    const player_name = document.querySelector('div.shot--position div.player-name')
+    player_name.innerHTML = current_player.name
+}
+
 const initShootPosition = () => document.querySelector('div.shot--position').style.left = '160px'
 
-const welcome = () => {
+const partnerIsOk = () => (document.querySelector('input#parceiro').value != '')
+
+const host = async (welcome) => {
+    const html = await loadComponentHtml('welcome')
+
+    welcome.innerHTML = html
+
+    document.body.append(welcome)
+
+    let party = null
+    document.querySelector('input#welcome_multiplayer').addEventListener('change', (e) => {
+        if (e.target.checked) {
+            document.querySelector('div#multiplayer_config').style.display = 'block'
+            document.querySelector('button#welcome_iniciar').style.display = 'none'
+            document.querySelector('button#welcome_criar_party').style.display = 'block'
+        }else{
+            document.querySelector('div#multiplayer_config').style.display = 'none'
+            document.querySelector('div#parceiro').style.display = 'none'
+        }
+
+        if (!partnerIsOk()) {
+            document.querySelector('button#welcome_iniciar').disabled = true
+        }
+    })
+
+    // document.querySelectorAll('input[name="mode"]').forEach(e => {
+    //     e.addEventListener('change', (e) => {
+    //         const mode = document.querySelector('input[name="mode"]:checked').value
+    //         SOCKET.emit('update-party', {'partyId': party.id, 'mode': mode})
+    //     })
+    // });
+
+    // SOCKET.on('update-party-response', (data) => {
+    //     console.log(data);
+    // })
+
+    document.querySelector('input#codigo_party').addEventListener('click', (_) => {
+        if (document.querySelector('input#codigo_party').value=='') return
+
+        document.querySelector('input#codigo_party').select()
+        document.querySelector('input#codigo_party').setSelectionRange(0, 99999)
+        navigator.clipboard.writeText(window.location.origin + window.location.pathname + document.querySelector('input#codigo_party').value);
+        alert('Código da party copiado')
+    })
+
+    document.querySelector('button#welcome_criar_party').addEventListener('click', (_) => {
+        const name = document.querySelector('input#name').value
+        const mode = document.querySelector('input[name="mode"]:checked').value
+
+        if (name=="") return alert("Informe um nome")
+
+        document.querySelector('div#parceiro').style.display = 'flex'
+        document.querySelector('div#share_party').style.display = 'flex'
+
+        const bugs = []
+        ARENA_GRIDS.forEach(e => {
+            const mob = e.grid.querySelector('div')
+            const life = e.grid.querySelector('div#life')
+
+            const bug = {
+                'bugId': mob ? mob.dataset.mobId : null,
+                'slotId': e.grid.id,
+                'life': life ? parseFloat(life.style.width) : 0,
+                'effect': mob ? mob.dataset.effect : null,
+                'effectActive': mob ? mob.dataset.effectActive: null
+            }
+            bugs.push(bug)
+        })
+
+
+        SOCKET.emit('create-party', {'name': name, 'mode': mode, 'bugs':bugs})
+
+        SOCKET.on('create-party-success', (data) => {
+            MY_SOCKET_ID = data.socketId;
+            document.querySelector('input#codigo_party').value = '#party_' + data.party.id
+            document.querySelector('button#welcome_criar_party').disabled = true
+        })
+    })
+
+    document.querySelector('button#welcome_iniciar').addEventListener('click', (_) => {
+        const name = document.querySelector('input#name').value
+        const player_name = document.querySelector('div.shot--position div.player-name')
+        
+        if (name=="") return alert("Informe um nome")
+
+        player_name.innerHTML = name
+        THEME_ON = playSound(SOUNDS.THEME, 0.2, true)
+        welcome.remove()
+    })
+
+    SOCKET.on('partner-enter-the-party', (data) => {
+        setPlayer(data)
+        welcome.remove()
+    })
+}
+
+const partner = async (welcome) => {
+    const html = await loadComponentHtml('partner')
+    const partyId = window.location.hash
+
+    welcome.innerHTML = html
+
+    document.body.append(welcome)
+
+    SOCKET.emit('party-exists', {party: partyId})
+    SOCKET.on('party-exists-response', (data) => {
+        if (!data.result) {
+            alert('Party não encontrada')
+            return window.location.replace('./game')
+        }
+        
+        document.querySelector('li#host').innerText = 'Host: ' + data.data.users[0].name
+        document.querySelector('li#mode').innerText = 'Mode: ' + data.data.mode
+    })
+
+
+    const btn = document.querySelector('button#partner_entrar')
+    btn.addEventListener('click', (_) => {
+        const name = document.querySelector('input#name').value
+        if (name=='') return alert('insira um nome para continuar')
+        SOCKET.emit('enter-the-party', {name: name, party: partyId})
+    })
+
+    SOCKET.on('enter-the-party-response', (data) => {
+        welcome.remove()
+
+        MY_SOCKET_ID = data.socketId
+        updateMobsInGrid(data.party.bugs)
+
+        setPlayer(data.party)
+    })
+}
+
+const welcome = async () => {
     const welcome = document.createElement('div')
     welcome.style.width = '100%'
     welcome.style.height  = '100vh'
@@ -1452,32 +1691,72 @@ const welcome = () => {
     welcome.style.justifyContent = 'center'
     welcome.style.alignItems = 'center'
 
-    const panel = document.createElement('div')
-    panel.style.width = '200px'
-    panel.style.height = '200px'
-    panel.style.border = '1px solid white'
-    panel.style.color = 'white'
-    panel.style.textAlign = 'center'
-    panel.style.padding = '10px'
-    panel.innerHTML = "<p>Bem vindo</p>"
-    panel.innerHTML += "<br>"
-    panel.innerHTML += "<p>Jogo em desenvolvimento</p>"
-    panel.innerHTML += "<br>"
-    panel.innerHTML += "<p>Boa diversão :)</p>"
-    panel.innerHTML += "<br>"
-    panel.innerHTML += "<button id='iniciar' style='padding:5px 8px;'>Iniciar</button>"
+    const hash = window.location.hash
 
-    welcome.append(panel)
+    if (hash.length<=0) {
+        await host(welcome)
+    }else{
+        await partner(welcome)
+    }
+}
 
-    document.body.append(welcome)
+const loadComponentHtml = async (page) => {
+    const html = await fetch(`./${page}.html`)
+    .then(r=> r.text())
+    .then(r=> r)
 
-    document.querySelector('button#iniciar').addEventListener('click', (_) => {
-        welcome.remove()
-        THEME_ON = playSound(SOUNDS.THEME, 0.2, true)
+    return html
+}
+
+const forceZoom = () => {
+    var scale = 'scale(1)';
+    document.body.style.webkitTransform =  scale;    // Chrome, Opera, Safari
+    document.body.style.msTransform =   scale;       // IE 9
+    document.body.style.transform = scale;     // General
+}
+
+const blockZoom = () => {
+    document.addEventListener("keydown", function (e) {
+        if (
+         e.ctrlKey &&
+          (e.key == "=" ||
+            e.key == "+" ||
+            e.key == "-" ||
+            e.key == "≠" ||
+            e.key == "x" ||
+            e.key == "ç")
+        ) {
+          e.preventDefault();
+        }
+      });
+      document.addEventListener(
+        "wheel",
+        function (e) {
+          if (e.ctrlKey) {
+            e.preventDefault();
+          }
+        },
+        {
+          passive: false
+        }
+      );
+}
+
+const testeMousePosition = () => {
+    document.querySelector('div.arena').addEventListener('click', (e) => {
+        const x = e.pageX - posX
+        const y = e.pageY - posY
+
+        console.log(x, y);
     })
 }
 
 document.addEventListener("DOMContentLoaded", (_) => {
+    forceZoom()
+    blockZoom()
+
+    testeMousePosition()
+
     welcome()
 
     initShootPosition()

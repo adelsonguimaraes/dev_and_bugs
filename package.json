@@ -1,0 +1,27 @@
+{
+  "name": "game",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node sv/index.js",
+    "dev": "nodemon sv/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adelsonguimaraes/dev_and_bugs.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/adelsonguimaraes/dev_and_bugs/issues"
+  },
+  "homepage": "https://github.com/adelsonguimaraes/dev_and_bugs#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "nodemon": "^2.0.21",
+    "socket.io": "^4.6.1"
+  }
+}

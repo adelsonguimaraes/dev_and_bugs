@@ -8,10 +8,10 @@ html, body {
     overflow: hidden;
     scroll-behavior: smooth;
     transition: .5s;
-    -webkit-transform: scale(1);
+    /* -webkit-transform: scale(1);
     -ms-transform: scale(1);
-    transform: scale(1);
-    zoom: 0.99;
+    transform: scale(1); */
+    /* zoom: 0.99; */
 }
 .btn-play {
     position: absolute;
@@ -156,6 +156,7 @@ p {
     }
     .left {
         width: 90%;
+        padding: 0;
     }
     .title {
         font-size: 35px;
@@ -167,6 +168,30 @@ p {
     }
     .right > img {
         width: 220px;
+    }
+    .next {
+        bottom: 2;
+    }
+}
+
+@media screen and (min-width: 720px) {
+    .page {
+        padding: 0;
+    }
+    .left {
+        width: 50%;
+        padding: 50px;
+    }
+    .title {
+        font-size: 45px;
+        margin-bottom: 0;
+    }
+    p {
+        font-size: 16px;
+        padding: 10px 0;
+    }
+    .right > img {
+        width: 300px;
     }
     .next {
         bottom: 2;

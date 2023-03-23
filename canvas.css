@@ -1,0 +1,37 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    display: flex;
+    min-height: 100vh;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    background-color: rgb(28, 25, 35);
+    font-family: Arial, Helvetica, sans-serif;
+    background-image: url(img/bg.svg);
+    background-size: 105%;
+    background-position: center;
+}
+
+#arena {
+    border: 2px solid #000;
+    background-color: #1f1f1f;
+    width: 360px;
+    height: 480px;
+    position: absolute;
+    cursor: none;
+}
+
+div.shoot-area {
+    width: 360px;
+    height: 80px;
+    background-color: rgba(51, 52, 52, 0.608);
+}
+
+.rounded-img {
+    border-radius: 50%;
+}
