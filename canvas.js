@@ -167,6 +167,68 @@ class RangeRaffle {
     getMax = () => this.#max
 }
 
+
+class BugEffects {
+    #name
+    #event
+    #action
+    static names = this.#setNames()
+    static events = this.#setEvents()
+    static actions = this.#setActions()
+            
+    constructor({name, event, action}) {
+        this.#name = name
+        this.#event = event
+        this.#action = action
+    }
+
+    getName = () => this.#name
+    
+    getEvent = () => this.#event
+
+    getAction = () => this.#action
+
+    // startEvent({data=null}) {
+    //     switch(this.#name) {
+    //         case this.names.LELVEL_UP: {
+    //             return this.phantom(data)
+    //         }
+    //         case this.names.DIVIDE: {
+    //             return this.divide(data)
+    //         }
+    //     }
+    // }
+
+    static #setActions() {
+        return {
+            phantom({ctx, block}) {
+                const bug = block.getBug()
+                bug.setOpacity({ctx: ctx, block: block})
+            },
+            divide({callback, model, event}) {
+                if (event != this.events.DIVIDE) return false
+                callback({sequence: 2, model})
+            }
+        }
+    }
+
+    static #setNames() {
+        return {
+            PHANTOM: 'phantom',
+            DIVIDE: 'divide',
+        }
+    }
+
+    static #setEvents() {
+        return {
+            LELVEL_UP: 'level_up',
+            DIVIDE: 'divide',
+            COLLISION: 'collision'
+        }
+    }
+}
+
+
 class BugModels {
     #id
     #name
@@ -177,6 +239,7 @@ class BugModels {
     #emergenceLevel
     #rangeRaffle
     #alertDrop
+    static effects = this.#createEffects()
 
     constructor({id, name, img, description, allowedCollisions, effect, emergenceLevel, rangeRaffle}) {
         this.#id = id
@@ -191,9 +254,25 @@ class BugModels {
     }
 
     getImg = () => this.#img
+    getEffect = () => this.#effect
     getEmergenceLevel = () => this.#emergenceLevel
     getRangeRaffle = () => this.#rangeRaffle
     setAlertDrop = (alert) => this.#alertDrop = alert
+
+    static #createEffects () {
+        return {
+            PHANTOM: new BugEffects({
+                name: BugEffects.names.PHANTOM, 
+                event: BugEffects.events.LELVEL_UP,
+                action: BugEffects.actions.phantom
+            }),
+            DIVIDE: new BugEffects({
+                name: BugEffects.names.DIVIDE, 
+                event: BugEffects.events.DEAD,
+                action: BugEffects.actions.divide
+            }),
+        }
+    }
 }
 
 class BugLife{
@@ -255,28 +334,23 @@ class BugLife{
 }
 
 class Bug{
+    static models = this.#createModels()
+
     constructor() {
         this.life = null
         this.width = 50
         this.height = 50
         this.img = null
         this.model = null
-        this.models = []
-
-        this.createModels()
     }
 
-    getLife() {
-        return this.life
-    }
+    getLife = () => this.life
 
-    setLife(life) {
-        this.life = life
-    }
+    setLife = (life) => this.life = life
 
-    setModel(model) {
-        this.model = model
-    }
+    setModel = (model) => this.model = model
+
+    getModel = () => this.model
 
     redraw({ctx, block}) {
         ctx.beginPath()
@@ -298,14 +372,20 @@ class Bug{
         this.img = new Image()
         this.img.onload = () => ctx.drawImage(this.img, block.x+5, block.y+5, this.width, this.height)
         this.img.src = this.model.getImg()
+        
         ctx.closePath()
 
         block.setBug(this)
     }
 
+    setOpacity({ctx, block}) {
+        ctx.globalAlpha = 0.4
+        this.redraw({ctx: ctx, block: block})
+    }
+
     raffleModel({level}) {
         let rand = Math.floor(Math.random() * 100)
-        const fitModels = this.models.filter(e => (e.getEmergenceLevel()<=level && e.getEmergenceLevel()!=null) 
+        const fitModels = Bug.models.filter(e => (e.getEmergenceLevel()<=level && e.getEmergenceLevel()!=null) 
             && (rand >= e.getRangeRaffle().getMin() && rand <= e.getRangeRaffle().getMax()))
         rand = Math.floor(Math.random() * fitModels.length)
         const model = fitModels[rand]
@@ -313,8 +393,8 @@ class Bug{
         this.setModel(model)
     }
 
-    createModels() {
-        this.models = [
+    static #createModels() {
+        return [
             new BugModels({
                 id: 1,
                 name: 'Demon',
@@ -332,7 +412,7 @@ class Bug{
                 img: 'https://i.gifer.com/origin/ce/ce1c245954005ac923e3cea5f70518df_w200.gif',
                 description: 'Se torna oculto entre os leveis',
                 allowerdCollisions: new AllowedCollisions(),
-                effect: null,
+                effect: BugModels.effects.PHANTOM,
                 emergenceLevel: 10,
                 rangeRaffle: new RangeRaffle({min: 20, max: 40})
             }),
@@ -352,7 +432,7 @@ class Bug{
                 img: 'https://media.tenor.com/DuJ4EA8BUVUAAAAC/slime-pixel-art.gif',
                 description: 'Ao ser derrotado se divide em dois slimes',
                 allowerdCollisions: new AllowedCollisions(),
-                effect: null,
+                effect: BugModels.effects.DIVIDE,
                 emergenceLevel: 20,
                 rangeRaffle: new RangeRaffle({min: 55, max: 58})
             }),
@@ -641,7 +721,7 @@ class Controller{
         this.canvasArena = new CanvasArena(this.blockHeight)
         this.player = new Player()
         this.blocks = []
-        this.velocity = 5
+        this.velocity = 10
         this.bullets = []
         this.bulletSize = 10
         this.totalBullets = 1
@@ -875,10 +955,21 @@ class Controller{
         this.drawGameOver()
     }
 
+    listBugsByEvent({event}) {
+        this.blocks.filter(block => block.bug != null 
+            && block.getBug().getModel().getEffect() != null
+            && block.getBug().getModel().getEffect().getEvent() == event)
+            .forEach(e => {
+                const action = e.getBug().getModel().getEffect().getAction()
+                action({ctx: this.canvasArena.ctx, block: e})
+            })
+    }
+
     incrementLevel() {
         if (this.bullets.length<=0) {
             this.level++
             this.player.resetMoviment()
+            this.listBugsByEvent({event: BugEffects.events.LELVEL_UP})
             this.dropSequence({sequence: this.sequenceDrops})
         }
     }
