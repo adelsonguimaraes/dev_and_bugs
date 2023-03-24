@@ -145,65 +145,55 @@ const MOB_EFFECTS = {
     }
 }
 
-const MOBS = [
-    {
-        ID: 1,
-        NAME: 'Demon',
-        IMG: 'https://media.tenor.com/gFvc0poigIYAAAAM/demon-red.gif',
-        COLISIONS: {LEFT: true, RIGHT: true, TOP: true, BOTTOM: true},
-        EFFECT: null,
-        LEVEL: 0,
-        RAFFLE: {MIN: 0, MAX: 100},
-        ALERT: false
-    },
-    {
-        ID: 2,
-        NAME: 'Bat',
-        IMG: 'https://i.gifer.com/origin/ce/ce1c245954005ac923e3cea5f70518df_w200.gif',
-        COLISIONS: {LEFT: true, RIGHT: true, TOP: true, BOTTOM: true},
-        EFFECT: MOB_EFFECTS.PHANTOM,
-        LEVEL: 10,
-        RAFFLE: {MIN: 20, MAX: 40},
-        ALERT: false
-    },
-    {
-        ID: 3,
-        NAME: 'Slime',
-        IMG: 'https://media.tenor.com/mgZBc6GhNlUAAAAC/game-pixel-art.gif',
-        COLISIONS: {LEFT: true, RIGHT: true, TOP: true, BOTTOM: true},
-        EFFECT: null,
-        LEVEL: 1000,
-        RAFFLE: {MIN: 1000, MAX: 1000},
-        ALERT: false
-    },
-    {
-        ID: 4,
-        NAME: 'Big Slime',
-        IMG: 'https://media.tenor.com/DuJ4EA8BUVUAAAAC/slime-pixel-art.gif',
-        COLISIONS: {LEFT: true, RIGHT: true, TOP: true, BOTTOM: true},
-        EFFECT: MOB_EFFECTS.DIVIDE,
-        LEVEL: 20,
-        RAFFLE: {MIN: 55, MAX: 58},
-        ALERT: false
-    },
-    {
-        ID: 5,
-        NAME: 'Sonolento',
-        IMG: './img/sonolento.gif',
-        COLISIONS: {LEFT: true, RIGHT: true, TOP: true, BOTTOM: true},
-        EFFECT: MOB_EFFECTS.DIVIDE,
-        LEVEL: 99999,
-        RAFFLE: {MIN: 55, MAX: 58},
-        ALERT: false
-    },
-]
+class AllowedCollisions {
+    constructor(left=null, right=true, top=true, bottom=true) {
+        this.left = left
+        this.right = right
+        this.top = top
+        this.bottom = bottom
+    }
+}
+
+class RangeRaffle {
+    #min
+    #max
+
+    constructor({min, max}) {
+        this.#min = min
+        this.#max = max
+    }
+
+    getMin = () => this.#min
+    getMax = () => this.#max
+}
 
 class BugModels {
-    constructor() {
-        this.id,
-        this.name,
-        this.img,
+    #id
+    #name
+    #img
+    #description
+    #allowedCollisions
+    #effect
+    #emergenceLevel
+    #rangeRaffle
+    #alertDrop
+
+    constructor({id, name, img, description, allowedCollisions, effect, emergenceLevel, rangeRaffle}) {
+        this.#id = id
+        this.#name = name
+        this.#img = img
+        this.#description = description
+        this.#allowedCollisions = allowedCollisions
+        this.#effect = effect
+        this.#emergenceLevel = emergenceLevel
+        this.#rangeRaffle = rangeRaffle
+        this.#alertDrop = false
     }
+
+    getImg = () => this.#img
+    getEmergenceLevel = () => this.#emergenceLevel
+    getRangeRaffle = () => this.#rangeRaffle
+    setAlertDrop = (alert) => this.#alertDrop = alert
 }
 
 class BugLife{
@@ -217,6 +207,12 @@ class BugLife{
         this.#width = 50
         this.#height = 5
         this.#color = 'red'
+    }
+
+    setComputedLife({baseBugLife, incrementBugLife, level}) {
+        this.#life = (level<=1) 
+            ? baseBugLife 
+            : (baseBugLife + (baseBugLife*(incrementBugLife/100)))
     }
 
     setWidth(width) {
@@ -259,14 +255,15 @@ class BugLife{
 }
 
 class Bug{
-    constructor({id=null, life=null, blockIndex=null, srcImg=null}) {
-        this.id = id
+    constructor() {
         this.life = null
-        this.blockIndex = blockIndex
         this.width = 50
         this.height = 50
-        this.srcImg = srcImg
         this.img = null
+        this.model = null
+        this.models = []
+
+        this.createModels()
     }
 
     getLife() {
@@ -275,6 +272,10 @@ class Bug{
 
     setLife(life) {
         this.life = life
+    }
+
+    setModel(model) {
+        this.model = model
     }
 
     redraw({ctx, block}) {
@@ -287,17 +288,75 @@ class Bug{
         if (this.life != null) this.life.draw({ctx: ctx, block: block});
     }
 
-    draw({ctx=null, block=null}) {
+    draw({ctx=null, block=null, level=null}) {
+        this.raffleModel({level})
+
         ctx.beginPath()
         ctx.fillStyle = 'transparent'
         ctx.fillRect(block.x, block.y, this.width, this.height)
         
         this.img = new Image()
         this.img.onload = () => ctx.drawImage(this.img, block.x+5, block.y+5, this.width, this.height)
-        this.img.src = this.srcImg
+        this.img.src = this.model.getImg()
         ctx.closePath()
 
         block.setBug(this)
+    }
+
+    raffleModel({level}) {
+        let rand = Math.floor(Math.random() * 100)
+        const fitModels = this.models.filter(e => (e.getEmergenceLevel()<=level && e.getEmergenceLevel()!=null) 
+            && (rand >= e.getRangeRaffle().getMin() && rand <= e.getRangeRaffle().getMax()))
+        rand = Math.floor(Math.random() * fitModels.length)
+        const model = fitModels[rand]
+
+        this.setModel(model)
+    }
+
+    createModels() {
+        this.models = [
+            new BugModels({
+                id: 1,
+                name: 'Demon',
+                img: 'https://media.tenor.com/gFvc0poigIYAAAAM/demon-red.gif',
+                description: 'Surge em todos os leveis',
+                allowedCollisions: new AllowedCollisions(),
+                effect: null,
+                emergenceLevel: 0,
+                rangeRaffle: new RangeRaffle({min: 0, max: 100}),
+
+            }),
+            new BugModels({
+                id: 2,
+                name: 'Bat',
+                img: 'https://i.gifer.com/origin/ce/ce1c245954005ac923e3cea5f70518df_w200.gif',
+                description: 'Se torna oculto entre os leveis',
+                allowerdCollisions: new AllowedCollisions(),
+                effect: null,
+                emergenceLevel: 10,
+                rangeRaffle: new RangeRaffle({min: 20, max: 40})
+            }),
+            new BugModels({
+                id: 3,
+                name: 'Slime',
+                img: 'https://media.tenor.com/mgZBc6GhNlUAAAAC/game-pixel-art.gif',
+                description: 'Surge quando um Big Slime é derrotado',
+                allowerdCollisions: new AllowedCollisions(),
+                effect: null,
+                emergenceLevel: null,
+                rangeRaffle: null,
+            }),
+            new BugModels({
+                id: 4,
+                name: 'Big Slime',
+                img: 'https://media.tenor.com/DuJ4EA8BUVUAAAAC/slime-pixel-art.gif',
+                description: 'Ao ser derrotado se divide em dois slimes',
+                allowerdCollisions: new AllowedCollisions(),
+                effect: null,
+                emergenceLevel: 20,
+                rangeRaffle: new RangeRaffle({min: 55, max: 58})
+            }),
+        ]
     }
 }
 
@@ -588,6 +647,7 @@ class Controller{
         this.totalBullets = 1
         this.bulletDelay = 10
         this.baseBugLife = 1000
+        this.incrementBugLife = 3
         this.sequenceDrops = 2
         this.level = 1
         this.mousePosition = {x:null, y:null}
@@ -604,14 +664,23 @@ class Controller{
         return block
     }
 
+    incrementBugLifeUpdate = () => this.incrementBugLife+=3
+
     dropBug() {
         const block = this.getRandomFreeBlock()
-        const bug = new Bug({id: MOBS.ID, blockIndex: 0, srcImg: MOBS[0].IMG, life: 100})
-        bug.draw({ctx: this.canvasArena.ctx, block: block})
+        const bug = new Bug()
+        bug.draw({ctx: this.canvasArena.ctx, block: block, level: this.level})
         
         const life = new BugLife()
-        bug.setLife(life)
+        life.setComputedLife({
+            baseBugLife: this.baseBugLife, 
+            incrementBugLife: this.incrementBugLife, 
+            level: this.level})
         life.draw({ctx: this.canvasArena.ctx, block: block})
+
+        bug.setLife(life)
+
+        if (this.level>1) this.incrementBugLifeUpdate()
     }
 
     drawGameOver() {
