@@ -777,6 +777,7 @@ class Player {
     setY = (y) => this.y = y
     getY = () => this.y
     setPoints = (points) => this.points = points
+    getPoints = () => this.points
     incrementPoints = () => this.points++
     getCenter = () => ({x: this.x, y: this.y})
     getRight = () => (this.x+this.size)
@@ -1196,7 +1197,6 @@ class Controller{
             baseBugLife: this.baseBugLife});
         const life = bug.getLife().getWidth()
         if (life<=0) {
-            this.player.incrementPoints()
             this.perfect()
             block.removeBug()
             if (bug.getEffect()==BugEffects.names.DIVIDE) {
@@ -1204,6 +1204,8 @@ class Controller{
                 action({callback: this.dropSequence.bind(this), model: Bug.models[2]})
             }
         }
+        
+        this.player.incrementPoints()
     }
 
     bulletColisionBug(bullet) {
@@ -1304,6 +1306,8 @@ class Controller{
         this.drawCrosshairs()
         this.player.redraw(ctx)
         this.drawGameOver()
+        this.displayLevel()
+        this.displayPoints()
     }
 
     listBugsByEvent({event}) {
@@ -1421,6 +1425,16 @@ class Controller{
 
     stopShooting() {
         this.on = false
+    }
+
+    displayLevel = () => {
+        const divLevel = document.querySelector('div.level')
+        divLevel.innerHTML = 'Level ' + this.level
+    }
+
+    displayPoints = () => {
+        const divPoints = document.querySelector('div.points')
+        divPoints.innerHTML = 'Points ' + this.player.getPoints()
     }
 
 
