@@ -8,6 +8,11 @@ class Block {
         this.bug = bug
     }
 
+    getX = () => this.x
+    getY = () => this.y
+    getWidth = () => this.width
+    getHeight = () => this.height
+
     draw(ctx) {
         ctx.fillStyle = this.bg
         ctx.fillRect(this.x, this.y, this.width, this.height)
@@ -167,6 +172,41 @@ class RangeRaffle {
     getMax = () => this.#max
 }
 
+class Sprite {
+    #id
+    #img
+    #width
+    #height
+    #cropX
+    #cropY
+    #type
+    
+    static types = this.#setTypes()
+
+    constructor({id, img, width, height, cropX, cropY, type=Sprite.types.NORMAL}) {
+        this.#id = id
+        this.#img = img
+        this.#width = width
+        this.#height = height
+        this.#cropX = cropX
+        this.#cropY = cropY
+        this.#type = type
+    }
+
+    getImg = () => this.#img
+    getCropX = () => this.#cropX
+    getCropY = () => this.#cropY
+    getWidth = () => this.#width
+    getHeight = () => this.#height
+    getType = () => this.#type
+
+    static #setTypes() {
+        return {
+            NORMAL: 0,
+            EFFECT: 1,
+        }
+    }
+}
 
 class BugEffects {
     #name
@@ -188,25 +228,13 @@ class BugEffects {
 
     getAction = () => this.#action
 
-    // startEvent({data=null}) {
-    //     switch(this.#name) {
-    //         case this.names.LELVEL_UP: {
-    //             return this.phantom(data)
-    //         }
-    //         case this.names.DIVIDE: {
-    //             return this.divide(data)
-    //         }
-    //     }
-    // }
-
     static #setActions() {
         return {
-            phantom({ctx, block}) {
+            phantom({block}) {
                 const bug = block.getBug()
-                bug.setOpacity({ctx: ctx, block: block})
+                bug.effectActiveToogle()
             },
-            divide({callback, model, event}) {
-                if (event != this.events.DIVIDE) return false
+            divide({callback, model}) {
                 callback({sequence: 2, model})
             }
         }
@@ -232,7 +260,7 @@ class BugEffects {
 class BugModels {
     #id
     #name
-    #img
+    #sprites
     #description
     #allowedCollisions
     #effect
@@ -241,10 +269,10 @@ class BugModels {
     #alertDrop
     static effects = this.#createEffects()
 
-    constructor({id, name, img, description, allowedCollisions, effect, emergenceLevel, rangeRaffle}) {
+    constructor({id, name, sprites, description, allowedCollisions, effect, emergenceLevel, rangeRaffle}) {
         this.#id = id
         this.#name = name
-        this.#img = img
+        this.#sprites = sprites
         this.#description = description
         this.#allowedCollisions = allowedCollisions
         this.#effect = effect
@@ -253,11 +281,11 @@ class BugModels {
         this.#alertDrop = false
     }
 
-    getImg = () => this.#img
     getEffect = () => this.#effect
     getEmergenceLevel = () => this.#emergenceLevel
     getRangeRaffle = () => this.#rangeRaffle
     setAlertDrop = (alert) => this.#alertDrop = alert
+    listSprites = () => this.#sprites
 
     static #createEffects () {
         return {
@@ -336,12 +364,16 @@ class BugLife{
 class Bug{
     static models = this.#createModels()
 
-    constructor() {
+    constructor({model = null}) {
         this.life = null
         this.width = 50
         this.height = 50
         this.img = null
-        this.model = null
+        this.model = model
+        this.spriteIndex = 0
+        this.spriteEslapsed = 0
+        this.spriteHold = 10
+        this.effectActive = false
     }
 
     getLife = () => this.life
@@ -352,35 +384,68 @@ class Bug{
 
     getModel = () => this.model
 
+    getSprite = () => {
+        const filter = (this.effectActive) ? Sprite.types.EFFECT : Sprite.types.NORMAL
+        const sprites = this.model.listSprites().filter(e => e.getType() == filter)
+        return sprites[this.spriteIndex]
+    }
+
+    getEffect = () => {
+        const effect = this.model.getEffect()
+        if (effect!=null) {
+            return effect.getName()
+        }else{
+            return null
+        }
+
+    }
+
+    effectActiveToogle = () => this.effectActive = !this.effectActive
+
+    incrementSpriteIndex = () => {
+        const filter = (this.effectActive) ? Sprite.types.EFFECT : Sprite.types.NORMAL
+        const sprites = this.model.listSprites().filter(e => e.getType() == filter)
+        if (this.spriteEslapsed>=this.spriteHold) {
+            this.spriteEslapsed=0
+            if (this.spriteIndex>=(sprites.length-1)) {
+                this.spriteIndex = 0; 
+            }else {
+                this.spriteIndex++
+            }
+        }else{
+            this.spriteEslapsed++
+        }
+    }
+
     redraw({ctx, block}) {
+        const sprite = this.getSprite()
+        
         ctx.beginPath()
-        ctx.fillStyle = 'transparent'
-        ctx.fillRect(block.x, block.y, this.width, this.height)
-        ctx.drawImage(this.img, block.x+5, block.y+5, this.width, this.height)
+        ctx.fillStyle = '#ffffff2b'
+        ctx.fillRect(block.getX()+5, block.getY()+5, block.getWidth()-10, block.getHeight()-10)
+        
+        ctx.drawImage(
+            this.img, sprite.getCropX(), sprite.getCropY(),
+            sprite.getWidth(), sprite.getHeight(),
+            block.x+5, block.y+5, this.width, this.height
+        )
         ctx.closePath()
+
+        this.incrementSpriteIndex()
 
         if (this.life != null) this.life.draw({ctx: ctx, block: block});
     }
 
     draw({ctx=null, block=null, level=null}) {
-        this.raffleModel({level})
+        if (this.model==null) this.raffleModel({level})
+        
+        const sprite = this.getSprite()
 
-        ctx.beginPath()
-        ctx.fillStyle = 'transparent'
-        ctx.fillRect(block.x, block.y, this.width, this.height)
-        
         this.img = new Image()
-        this.img.onload = () => ctx.drawImage(this.img, block.x+5, block.y+5, this.width, this.height)
-        this.img.src = this.model.getImg()
-        
-        ctx.closePath()
+        this.img.onload = () => this.redraw({ctx: ctx, block: block})
+        this.img.src = sprite.getImg()
 
         block.setBug(this)
-    }
-
-    setOpacity({ctx, block}) {
-        ctx.globalAlpha = 0.4
-        this.redraw({ctx: ctx, block: block})
     }
 
     raffleModel({level}) {
@@ -398,43 +463,296 @@ class Bug{
             new BugModels({
                 id: 1,
                 name: 'Demon',
-                img: 'https://media.tenor.com/gFvc0poigIYAAAAM/demon-red.gif',
                 description: 'Surge em todos os leveis',
                 allowedCollisions: new AllowedCollisions(),
                 effect: null,
                 emergenceLevel: 0,
                 rangeRaffle: new RangeRaffle({min: 0, max: 100}),
-
+                sprites: [
+                    new Sprite({
+                        id: 1,
+                        img: './img/sprites/demon_sprites.png',
+                        cropX: 0,
+                        cropY: 10,
+                        width: 230,
+                        height: 230
+                    }),
+                    new Sprite({
+                        id: 2,
+                        img: './img/sprites/demon_sprites.png',
+                        cropX: 219,
+                        cropY: 10,
+                        width: 230,
+                        height: 230
+                    }),
+                    new Sprite({
+                        id: 3,
+                        img: './img/sprites/demon_sprites.png',
+                        cropX: 440,
+                        cropY: 10,
+                        width: 230,
+                        height: 230
+                    }),
+                    new Sprite({
+                        id: 4,
+                        img: './img/sprites/demon_sprites.png',
+                        cropX: 660,
+                        cropY: 0,
+                        width: 230,
+                        height: 230
+                    }),
+                    new Sprite({
+                        id: 5,
+                        img: './img/sprites/demon_sprites.png',
+                        cropX: 880,
+                        cropY: 0,
+                        width: 230,
+                        height: 230
+                    }),
+                    new Sprite({
+                        id: 6,
+                        img: './img/sprites/demon_sprites.png',
+                        cropX: 0,
+                        cropY: 280,
+                        width: 230,
+                        height: 230
+                    })
+                ]
             }),
             new BugModels({
                 id: 2,
                 name: 'Bat',
-                img: 'https://i.gifer.com/origin/ce/ce1c245954005ac923e3cea5f70518df_w200.gif',
                 description: 'Se torna oculto entre os leveis',
                 allowerdCollisions: new AllowedCollisions(),
                 effect: BugModels.effects.PHANTOM,
                 emergenceLevel: 10,
-                rangeRaffle: new RangeRaffle({min: 20, max: 40})
+                rangeRaffle: new RangeRaffle({min: 20, max: 40}),
+                sprites: [
+                    new Sprite({
+                        id: 1,
+                        img: './img/sprites/bat_sprite.png',
+                        cropX: 0,
+                        cropY: 0,
+                        width: 200,
+                        height: 200
+                    }),
+                    new Sprite({
+                        id: 2,
+                        img: './img/sprites/bat_sprite.png',
+                        cropX: 200,
+                        cropY: 0,
+                        width: 200,
+                        height: 200
+                    }),
+                    new Sprite({
+                        id: 3,
+                        img: './img/sprites/bat_sprite.png',
+                        cropX: 400,
+                        cropY: 0,
+                        width: 200,
+                        height: 200,
+                        type: Sprite.types.EFFECT
+                    }),
+                    new Sprite({
+                        id: 4,
+                        img: './img/sprites/bat_sprite.png',
+                        cropX: 600,
+                        cropY: 0,
+                        width: 200,
+                        height: 200,
+                        type: Sprite.types.EFFECT
+                    })
+                ]
             }),
             new BugModels({
                 id: 3,
                 name: 'Slime',
-                img: 'https://media.tenor.com/mgZBc6GhNlUAAAAC/game-pixel-art.gif',
                 description: 'Surge quando um Big Slime é derrotado',
                 allowerdCollisions: new AllowedCollisions(),
                 effect: null,
                 emergenceLevel: null,
                 rangeRaffle: null,
+                sprites: [
+                    new Sprite({
+                        id: 1,
+                        img: './img/sprites/slime_sprite.png',
+                        cropX: 40,
+                        cropY: 80,
+                        width: 280,
+                        height: 280
+                    }),
+                    new Sprite({
+                        id: 2,
+                        img: './img/sprites/slime_sprite.png',
+                        cropX: 400,
+                        cropY: 80,
+                        width: 280,
+                        height: 280
+                    }),
+                    new Sprite({
+                        id: 3,
+                        img: './img/sprites/slime_sprite.png',
+                        cropX: 750,
+                        cropY: 80,
+                        width: 280,
+                        height: 280
+                    }),
+                    new Sprite({
+                        id: 4,
+                        img: './img/sprites/slime_sprite.png',
+                        cropX: 1120,
+                        cropY: 80,
+                        width: 280,
+                        height: 280
+                    }),
+                    new Sprite({
+                        id: 5,
+                        img: './img/sprites/slime_sprite.png',
+                        cropX: 1480,
+                        cropY: 80,
+                        width: 280,
+                        height: 280
+                    }),
+                    new Sprite({
+                        id: 6,
+                        img: './img/sprites/slime_sprite.png',
+                        cropX: 40,
+                        cropY: 440,
+                        width: 280,
+                        height: 280
+                    }),
+                    new Sprite({
+                        id: 7,
+                        img: './img/sprites/slime_sprite.png',
+                        cropX: 400,
+                        cropY: 440,
+                        width: 280,
+                        height: 280
+                    }),
+                    new Sprite({
+                        id: 8,
+                        img: './img/sprites/slime_sprite.png',
+                        cropX: 750,
+                        cropY: 440,
+                        width: 280,
+                        height: 280
+                    }),
+                    new Sprite({
+                        id: 9,
+                        img: './img/sprites/slime_sprite.png',
+                        cropX: 1120,
+                        cropY: 440,
+                        width: 280,
+                        height: 280
+                    }),
+                    new Sprite({
+                        id: 10,
+                        img: './img/sprites/slime_sprite.png',
+                        cropX: 1480,
+                        cropY: 440,
+                        width: 280,
+                        height: 280
+                    }),
+                    new Sprite({
+                        id: 11,
+                        img: './img/sprites/slime_sprite.png',
+                        cropX: 40,
+                        cropY: 800,
+                        width: 280,
+                        height: 280
+                    }),
+                    new Sprite({
+                        id: 12,
+                        img: './img/sprites/slime_sprite.png',
+                        cropX: 400,
+                        cropY: 800,
+                        width: 280,
+                        height: 280
+                    }),
+                    new Sprite({
+                        id: 13,
+                        img: './img/sprites/slime_sprite.png',
+                        cropX: 750,
+                        cropY: 800,
+                        width: 280,
+                        height: 280
+                    }),
+                    new Sprite({
+                        id: 14,
+                        img: './img/sprites/slime_sprite.png',
+                        cropX: 1120,
+                        cropY: 940,
+                        width: 280,
+                        height: 280
+                    })
+                ]
             }),
             new BugModels({
                 id: 4,
                 name: 'Big Slime',
-                img: 'https://media.tenor.com/DuJ4EA8BUVUAAAAC/slime-pixel-art.gif',
                 description: 'Ao ser derrotado se divide em dois slimes',
                 allowerdCollisions: new AllowedCollisions(),
                 effect: BugModels.effects.DIVIDE,
-                emergenceLevel: 20,
-                rangeRaffle: new RangeRaffle({min: 55, max: 58})
+                emergenceLevel: 0,
+                rangeRaffle: new RangeRaffle({min: 0, max: 100}),
+                sprites: [
+                    new Sprite({
+                        id: 1,
+                        img: './img/sprites/big_slime_sprite.png',
+                        cropX: 0,
+                        cropY: 0,
+                        width: 365,
+                        height: 360
+                    }),
+                    new Sprite({
+                        id: 2,
+                        img: './img/sprites/big_slime_sprite.png',
+                        cropX: 365,
+                        cropY: 0,
+                        width: 365,
+                        height: 360
+                    }),
+                    new Sprite({
+                        id: 3,
+                        img: './img/sprites/big_slime_sprite.png',
+                        cropX: 730,
+                        cropY: 0,
+                        width: 365,
+                        height: 360
+                    }),
+                    new Sprite({
+                        id: 4,
+                        img: './img/sprites/big_slime_sprite.png',
+                        cropX: 1085,
+                        cropY: 0,
+                        width: 365,
+                        height: 360
+                    }),
+                    new Sprite({
+                        id: 5,
+                        img: './img/sprites/big_slime_sprite.png',
+                        cropX: 1438,
+                        cropY: 0,
+                        width: 365,
+                        height: 360
+                    }),
+                    new Sprite({
+                        id: 6,
+                        img: './img/sprites/big_slime_sprite.png',
+                        cropX: 0,
+                        cropY: 360,
+                        width: 365,
+                        height: 360
+                    }),
+                    new Sprite({
+                        id: 7,
+                        img: './img/sprites/big_slime_sprite.png',
+                        cropX: 365,
+                        cropY: 360,
+                        width: 365,
+                        height: 360
+                    }),
+                ]
             }),
         ]
     }
@@ -724,7 +1042,7 @@ class Controller{
         this.velocity = 10
         this.bullets = []
         this.bulletSize = 10
-        this.totalBullets = 1
+        this.totalBullets = 10
         this.bulletDelay = 10
         this.baseBugLife = 1000
         this.incrementBugLife = 3
@@ -746,9 +1064,9 @@ class Controller{
 
     incrementBugLifeUpdate = () => this.incrementBugLife+=3
 
-    dropBug() {
+    dropBug({model = null}) {
         const block = this.getRandomFreeBlock()
-        const bug = new Bug()
+        const bug = new Bug({model: model})
         bug.draw({ctx: this.canvasArena.ctx, block: block, level: this.level})
         
         const life = new BugLife()
@@ -761,6 +1079,8 @@ class Controller{
         bug.setLife(life)
 
         if (this.level>1) this.incrementBugLifeUpdate()
+
+        bug.getEffect()
     }
 
     drawGameOver() {
@@ -790,12 +1110,12 @@ class Controller{
         return false
     }
 
-    dropSequence({sequence = 0}) {
+    dropSequence({sequence = 0, model = null}) {
         if (this.checkGameOver()) return false
 
         let count = 0
         while(count<sequence) {
-            this.dropBug()
+            this.dropBug({model})
             count++
         }
     }
@@ -868,54 +1188,85 @@ class Controller{
 
     apllyBugDamage(block) {
         if (block.getBug()==null) return false
+        const bug = block.getBug()
 
-        block.getBug().getLife().calcLife({
+        bug.getLife().calcLife({
             damage: this.player.getDamage(), 
             extraDamage: this.player.getExtraDamage(), 
             baseBugLife: this.baseBugLife});
-        const life = block.getBug().getLife().getWidth()
+        const life = bug.getLife().getWidth()
         if (life<=0) {
             this.player.incrementPoints()
             this.perfect()
             block.removeBug()
-            console.log('bug eliminado');
+            if (bug.getEffect()==BugEffects.names.DIVIDE) {
+                const action = bug.getModel().getEffect().getAction()
+                action({callback: this.dropSequence.bind(this), model: Bug.models[2]})
+            }
         }
     }
 
     bulletColisionBug(bullet) {
         const coords = bullet.getCoords()
-        
-        const bugs = this.blocks.filter(e => e.bug != null)
-        const colisionLeftBug = bugs.find(e => 
-            (Math.round(coords.right)>=Math.round(e.x)) 
-            && (Math.round(coords.left)<Math.round(e.x)) 
-            && (Math.round(coords.bottom)>=Math.round(e.y)) 
-            && (Math.round(coords.top)<=Math.round(e.y+e.height)
-            && (bullet.getOrientationX()>0)))
-        
-        const colisionRightBug = bugs.find(e => 
-            (Math.round(coords.left)<=Math.round(e.x+e.width)) 
-            && (Math.round(coords.right)>Math.round(e.x+e.width)) 
-            && (Math.round(coords.left)>=Math.round(e.x)) 
-            && (Math.round(coords.bottom)>=Math.round(e.y)) 
-            && (Math.round(coords.top)<=Math.round(e.y+e.height)
-            && (bullet.getOrientationX()<0)))
+        let colisionLeftBug = null
+        let colisionRightBug = null
+        let colisionTopBug = null
+        let colisionBottomBug = null
 
-        const colisionTopBug = bugs.find(e => 
-            (Math.round(coords.bottom)>=Math.round(e.y)) 
-            && (Math.round(coords.top) < Math.round(e.y)) 
-            && (Math.round(coords.bottom)<=Math.round(e.y+e.height)) 
-            && (Math.round(coords.left)<=Math.round(e.x+e.width) 
-            && (Math.round(coords.right)>=Math.round(e.x))
-            && (bullet.getOrientationY()<0)))
+        this.blocks.filter(block => block.bug != null)
+        .forEach(block => {
+            const bug = block.bug
+            const notPhantomEffect = (!bug.effectActive || (bug.effectActive && bug.getEffect()!=BugEffects.names.PHANTOM))
+            const bcoords = {
+                left: Math.round(block.x),
+                right: Math.round(block.x+block.width),
+                top: Math.round(block.y),
+                bottom: Math.round(block.y+block.height)
+            }
 
-        const colisionBottomBug = bugs.find(e => 
-            (Math.round(coords.top)<=Math.round(e.y+e.height)) 
-            && (Math.round(coords.bottom) > Math.round(e.y+e.height)) 
-            && (Math.round(coords.left)<=Math.round(e.x+e.width) 
-            && (Math.round(coords.right)>=Math.round(e.x))
-            && (bullet.getOrientationY()>0)))
-        
+            if ((Math.round(coords.right)>=bcoords.left) 
+                && (Math.round(coords.left)<bcoords.left) 
+                // && (Math.round(coords.right)<=bcoords.right)
+                && (Math.round(coords.bottom)>=bcoords.top) 
+                && (Math.round(coords.top)<=bcoords.bottom)
+                && (bullet.getOrientationX()>0)
+                && (notPhantomEffect)) {
+                    colisionLeftBug = block
+            }
+
+            if ((Math.round(coords.left)<=bcoords.right) 
+                && (Math.round(coords.right)>bcoords.right) 
+                // && (Math.round(coords.left)>=bcoords.left) 
+                && (Math.round(coords.bottom)>=bcoords.top) 
+                && (Math.round(coords.top)<=bcoords.bottom)
+                && (bullet.getOrientationX()<0)
+                && (notPhantomEffect)) {
+                    colisionRightBug = block
+            }
+
+            if  ((Math.round(coords.bottom)>=bcoords.top) 
+                && (Math.round(coords.bottom)<=bcoords.bottom)
+                // && (Math.round(coords.top)<bcoords.top) 
+                && (Math.round(coords.left)<=bcoords.right)
+                && (Math.round(coords.right)>=bcoords.left)
+                && (bullet.getOrientationY()<0)
+                && (notPhantomEffect)) {
+                    colisionTopBug = block
+                }
+
+            if ((Math.round(coords.top)<=bcoords.bottom) 
+                && (Math.round(coords.top)>=bcoords.top)
+                // && (Math.round(coords.bottom)>bcoords.bottom)
+                && (Math.round(coords.left)<=bcoords.right) 
+                && (Math.round(coords.right)>=bcoords.left)
+                && (bullet.getOrientationY()>0)
+                && (notPhantomEffect)) {
+                    colisionBottomBug = block
+                }
+                
+        })
+
+
 
         if (colisionLeftBug) {
             bullet.toogleDirectionX()
@@ -923,19 +1274,19 @@ class Controller{
             bullet.setCoords({x: colisionLeftBug.x-coords.size})
             this.apllyBugDamage(colisionLeftBug)
 
-        }if (colisionRightBug) {
+        }else if (colisionRightBug) {
             bullet.toogleDirectionX()
             bullet.incrementColisions()
             bullet.setCoords({x:colisionRightBug.x+colisionRightBug.width+coords.size})
             this.apllyBugDamage(colisionRightBug)
 
-        }if (colisionTopBug) {
+        }else if (colisionTopBug) {
             bullet.toogleDirectionY()
             bullet.incrementColisions()
             bullet.setCoords({y:colisionTopBug.y-coords.size})
             this.apllyBugDamage(colisionTopBug)
 
-        }if (colisionBottomBug){
+        }else if (colisionBottomBug){
             bullet.toogleDirectionY()
             bullet.incrementColisions()
             bullet.setCoords({y:colisionBottomBug.y+colisionBottomBug.height+coords.size})
@@ -1009,9 +1360,26 @@ class Controller{
     }
 
     drawTest({x, y, ctx}) {
-        ctx.clearRect(0, 0, this.canvasArena.canvasWith, this.canvasArena.canvasHeight)
+        // ctx.clearRect(0, 0, this.canvasArena.canvasWith, this.canvasArena.canvasHeight)
         ctx.arc(x, y, 10, 0, 2 * Math.PI)
         ctx.fillStyle = 'white'
+
+        const sprite = Bug.models[3].listSprites()[6]
+
+        const img = new Image()
+        img.onload = () => ctx.drawImage(
+            img, 
+            sprite.getCropX(),
+            sprite.getCropY(),
+            sprite.getWidth(),
+            sprite.getHeight(),
+            x,
+            y, 
+            60,
+            60
+        )
+        img.src = sprite.getImg()
+
         ctx.fill()
     }
 
