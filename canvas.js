@@ -961,14 +961,10 @@ class Bullet {
         this.setMode(mode)
     }
 
-    getColisions() {
-        return this.#colisions
-    }
-
-    setSize(size) {
-        this.#size = size
-    }
-
+    getColisions = () => this.#colisions
+    
+    setSize = (size) => this.#size = size
+    
     toogleDirectionX() {
         this.#directionX*=-1
         this.toogleOrientationX()
@@ -984,40 +980,26 @@ class Bullet {
         this.#velocityY = vy
     }
 
-    setInitDelay(initDelay) {
-        this.#initDelay = initDelay
-    }
-
-    getMode() {
-        return this.#mode
-    }
-
-    setMode(mode) {
-        this.#mode = mode
-    }
-
-    getOrientationX() {
-        return this.#orX
-    }
-
-    toogleOrientationX() {
-        this.#orX*=-1 
-    }
-
-    getOrientationY() {
-        return this.#orY
-    }
-
-    toogleOrientationY() {
-        this.#orY*=-1 
-    }
-
+    setInitDelay = (initDelay) => this.#initDelay = initDelay
+    
+    getMode = () => this.#mode
+    
+    setMode = (mode) => this.#mode = mode
+    
+    getOrientationX = () => this.#orX
+    
+    toogleOrientationX = () => this.#orX*=-1 
+    
+    getOrientationY = () => this.#orY
+    
+    toogleOrientationY = () => this.#orY*=-1 
+    
     draw(ctx) {
         ctx.beginPath()
         ctx.arc(this.#x, this.#y, this.#size, 0, 2 * Math.PI)
         ctx.fillStyle = this.#mode.getColor()
         ctx.strokeStyle = 'black'
-        ctx.lineWidth = 1
+        ctx.lineWidth = 3
         ctx.stroke()
         ctx.fill()
         ctx.closePath()
@@ -1025,7 +1007,7 @@ class Bullet {
 
     createModes() {
         this.#modes = [
-            new BulletModes({id: 1, name:'Normal', aceleration: 1, colisions: 0, color: 'green', damage: 1, point: 1}),
+            new BulletModes({id: 1, name:'Normal', aceleration: 1, colisions: 0, color: '#7fff00', damage: 1, point: 1}),
             new BulletModes({id: 2, name:'Moderate', aceleration: 2, colisions: 15, color: '#ffa000', damage: 2, point: 2}),
             new BulletModes({id: 3, name:'High', aceleration: 3, colisions: 30, color: '#e22b2b', damage: 3, point: 3}),
             new BulletModes({id: 4, name:'Insane', aceleration: 5, colisions: 50, color: 'white', damage: 5, point: 4})
@@ -1415,28 +1397,21 @@ class Controller{
         })
     }
 
-    inShooting() {
-        return this.on
-    }
+    inShooting = () => this.on
 
-    startShooting() {
-        this.on = true
-    }
+    startShooting = () => this.on = true
 
-    stopShooting() {
-        this.on = false
-    }
-
+    stopShooting = () => this.on = false
+    
     displayLevel = () => {
-        const divLevel = document.querySelector('div.level')
-        divLevel.innerHTML = 'Level ' + this.level
+        const divLevel = document.querySelector('div.level > span')
+        divLevel.innerHTML = this.level
     }
 
     displayPoints = () => {
-        const divPoints = document.querySelector('div.points')
-        divPoints.innerHTML = 'Points ' + this.player.getPoints()
+        const divPoints = document.querySelector('div.points > span')
+        divPoints.innerHTML = this.player.getPoints()
     }
-
 
     DOMContentLoaded() {
         document.addEventListener('DOMContentLoaded', (_) => {

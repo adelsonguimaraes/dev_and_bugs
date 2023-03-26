@@ -20,7 +20,7 @@ body {
 div.header {
     display: flex;
     width: 360px;
-    height: 20px;
+    height: 32px;
     font-size: 15px;
     padding: 2px;
     font-weight: bold;
@@ -32,7 +32,46 @@ div.header {
 }
 
 div.header > div.title {
-    width: 20%;
+    flex: 1;
+    height: 25px;
+    width: 10px;
+    margin: 0;
+    background-image: url(./img/menu_title.svg);
+    background-repeat: no-repeat;
+    /* background-position: ; */
+    cursor: pointer;
+}
+
+div.header > div.level {
+    min-width: 12%;
+    display: flex;
+}
+
+div.header > div.level > a {
+    height: 15px;
+    width: 15px;
+    padding: 0;
+    margin: 0;
+    /* display: inline-block; */
+    background-image: url(./img/dungeon_icon.svg);
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+div.header > div.points {
+    min-width: 20%;
+    display: flex;
+}
+
+div.header > div.points > a {
+    height: 15px;
+    width: 15px;
+    padding: 0;
+    margin: 2px;
+    /* display: inline-block; */
+    background-image: url(./img/coin_icon.svg);
+    background-repeat: no-repeat;
+    background-size: contain;
 }
 
 #arena {
