@@ -83,12 +83,33 @@ div.header > div.points > a {
     cursor: none;
 }
 
-div.shoot-area {
-    width: 360px;
-    height: 80px;
-    background-color: rgba(51, 52, 52, 0.608);
+div.events-info {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    display: none;
+    justify-content: center;
+    color: antiquewhite;
+    align-items: center;
+    font-size: 30px;
+    pointer-events: none;
+    animation: zoom-in 3s;
 }
 
-.rounded-img {
-    border-radius: 50%;
+@keyframes zoom-in {
+    0% {
+        transform: scale(0.5);
+    }
+    30% {
+        opacity: 0.8;
+    }
+    80% {
+        opacity: 0.3;
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1);
+    }
 }

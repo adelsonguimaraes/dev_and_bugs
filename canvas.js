@@ -1165,7 +1165,7 @@ class Controller{
         const total = this.blocks.filter(e => e.bug != null).length
         if (total<=0) {
             this.player.setPoints(this.player.getPoints()*2)
-            console.log('Perfect');
+            this.displayEventInfo({info: 'Perfect'})    
         }
     }
 
@@ -1179,12 +1179,12 @@ class Controller{
             baseBugLife: this.baseBugLife});
         const life = bug.getLife().getWidth()
         if (life<=0) {
-            this.perfect()
             block.removeBug()
             if (bug.getEffect()==BugEffects.names.DIVIDE) {
                 const action = bug.getModel().getEffect().getAction()
                 action({callback: this.dropSequence.bind(this), model: Bug.models[2]})
             }
+            this.perfect()
         }
         
         this.player.incrementPoints()
@@ -1406,6 +1406,13 @@ class Controller{
     displayLevel = () => {
         const divLevel = document.querySelector('div.level > span')
         divLevel.innerHTML = this.level
+    }
+
+    displayEventInfo = ({info}) => {
+        const divEventsInfo = document.querySelector('div.events-info')
+        divEventsInfo.style = 'display: flex'
+        divEventsInfo.innerHTML = info
+        setTimeout((_)=>(divEventsInfo.style='display: none'), 3000)
     }
 
     displayPoints = () => {
