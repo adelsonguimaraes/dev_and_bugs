@@ -321,8 +321,10 @@ class BugLife{
         ctx.closePath()
     }
 
-    calcLife({damage=0, extraDamage=0, baseBugLife=0}) {
-        const damageComputed = ((damage + extraDamage)/100 * baseBugLife)
+    calcLife({damage, extraDamage, baseBugLife, bulletMode}) {
+        const damageMode = bulletMode.getDamage()
+    
+        const damageComputed = (((damage + extraDamage)*damageMode)/100 * baseBugLife)
 
         const current_life = (this.#width*2)/100*this.#life
         const new_life = (current_life-damageComputed)
@@ -750,7 +752,7 @@ class Player {
     getY = () => this.y
     setPoints = (points) => this.points = points
     getPoints = () => this.points
-    incrementPoints = () => this.points++
+    incrementPoints = ({bulletMode}) => this.points+= bulletMode.getPoint()
     getCenter = () => ({x: this.x, y: this.y})
     getRight = () => (this.x+this.size)
     getLeft = () => (this.x-this.size)
@@ -844,13 +846,17 @@ class BulletModes {
     #aceleration
     #colisions
     #color
+    #damage
+    #point
 
-    constructor({id, name, aceleration, colisions, color}) {
+    constructor({id, name, aceleration, colisions, color, damage, point}) {
         this.#id = id
         this.#name = name
         this.#aceleration = aceleration
         this.#colisions = colisions
         this.#color = color
+        this.#damage = damage
+        this.#point = point
     }
 
     getAceleration() {
@@ -864,6 +870,9 @@ class BulletModes {
     getColor() {
         return this.#color
     }
+
+    getDamage = () => this.#damage
+    getPoint = () => this.#point
 }
 
 class Bullet {
@@ -981,8 +990,8 @@ class Bullet {
         this.#modes = [
             new BulletModes({id: 1, name:'Normal', aceleration: 1, colisions: 0, color: '#7fff00', damage: 1, point: 1}),
             new BulletModes({id: 2, name:'Moderate', aceleration: 2, colisions: 15, color: '#ffa000', damage: 2, point: 2}),
-            new BulletModes({id: 3, name:'High', aceleration: 3, colisions: 30, color: '#e22b2b', damage: 3, point: 3}),
-            new BulletModes({id: 4, name:'Insane', aceleration: 5, colisions: 50, color: 'white', damage: 5, point: 4})
+            new BulletModes({id: 3, name:'High', aceleration: 3, colisions: 30, color: '#e22b2b', damage: 2.5, point: 3}),
+            new BulletModes({id: 4, name:'Insane', aceleration: 5, colisions: 50, color: 'white', damage: 3, point: 5})
         ]
     }
 }
@@ -1141,14 +1150,18 @@ class Controller{
         }
     }
 
-    apllyBugDamage(block) {
+    apllyBugDamage({block, bullet}) {
         if (block.getBug()==null) return false
         const bug = block.getBug()
+        const mode = bullet.getMode()
 
         bug.getLife().calcLife({
             damage: this.player.getDamage(), 
             extraDamage: this.player.getExtraDamage(), 
-            baseBugLife: this.baseBugLife});
+            baseBugLife: this.baseBugLife,
+            bulletMode: mode
+        });
+            
         const life = bug.getLife().getWidth()
         if (life<=0) {
             block.removeBug()
@@ -1159,7 +1172,7 @@ class Controller{
             this.perfect()
         }
         
-        this.player.incrementPoints()
+        this.player.incrementPoints({bulletMode: mode})
     }
 
     bulletColisionBug(bullet) {
@@ -1228,25 +1241,25 @@ class Controller{
             bullet.toogleDirectionX()
             bullet.incrementColisions()
             bullet.setCoords({x: colisionLeftBug.x-coords.size})
-            this.apllyBugDamage(colisionLeftBug)
+            this.apllyBugDamage({block: colisionLeftBug, bullet: bullet})
 
         }else if (colisionRightBug) {
             bullet.toogleDirectionX()
             bullet.incrementColisions()
             bullet.setCoords({x:colisionRightBug.x+colisionRightBug.width+coords.size})
-            this.apllyBugDamage(colisionRightBug)
+            this.apllyBugDamage({block: colisionRightBug, bullet: bullet})
 
         }else if (colisionTopBug) {
             bullet.toogleDirectionY()
             bullet.incrementColisions()
             bullet.setCoords({y:colisionTopBug.y-coords.size})
-            this.apllyBugDamage(colisionTopBug)
+            this.apllyBugDamage({block: colisionTopBug, bullet: bullet})
 
         }else if (colisionBottomBug){
             bullet.toogleDirectionY()
             bullet.incrementColisions()
             bullet.setCoords({y:colisionBottomBug.y+colisionBottomBug.height+coords.size})
-            this.apllyBugDamage(colisionBottomBug)
+            this.apllyBugDamage({block: colisionBottomBug, bullet: bullet})
         }
     }
 
