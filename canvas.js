@@ -667,8 +667,8 @@ class Bug{
                 description: 'Ao ser derrotado se divide em dois slimes',
                 allowerdCollisions: new AllowedCollisions(),
                 effect: BugModels.effects.DIVIDE,
-                emergenceLevel: 0,
-                rangeRaffle: new RangeRaffle({min: 0, max: 100}),
+                emergenceLevel: 20,
+                rangeRaffle: new RangeRaffle({min: 55, max: 58}),
                 sprites: [
                     new Sprite({
                         id: 1,
@@ -996,6 +996,22 @@ class Bullet {
     }
 }
 
+class Alert {
+    #id
+    #description
+    #alerted
+
+    constructor({id, description}) {
+        this.#id = id
+        this.#description = description
+        this.#alerted = false
+    }
+
+    getDescription = () => this.#description
+    getAlerted = () => this.#alerted
+    setAlerted = () => this.#alerted = true
+}
+
 class Controller{
     constructor() {
         this.blockWidth = 60
@@ -1015,8 +1031,25 @@ class Controller{
         this.mousePosition = {x:null, y:null}
         this.on = false
         this.gameOver = false
+        this.alerts = this.createAlerts()
 
         this.DOMContentLoaded()
+    }
+
+    createAlerts = () => {
+        return {
+            DROP_BUGS_3X: new Alert({id: 1, description: 'Level 30:<br>Drop de Bugs aumenta 3x'})
+        }
+    }
+
+    controllerSequenceDrop = () => {
+        if (this.level>=30) {
+            if (this.alerts.DROP_BUGS_3X.getAlerted()) return false
+            
+            this.sequenceDrops=3
+            this.displayEventInfo({info: this.alerts.DROP_BUGS_3X.getDescription()})
+            this.alerts.DROP_BUGS_3X.setAlerted()
+        }
     }
 
     getRandomFreeBlock() {
@@ -1277,6 +1310,7 @@ class Controller{
         this.displayPoints()
         this.displayBullets()
         this.displayDamage()
+        this.controllerSequenceDrop() 
         Shop.displayValues()
     }
 
