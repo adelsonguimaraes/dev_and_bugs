@@ -144,6 +144,22 @@ class RangeRaffle {
     getMax = () => this.#max
 }
 
+class Critical {
+    static #probability = 1
+    static #multiplier = 3
+
+    static tryCritical = ({extra_damage}) => {
+        
+        const rand = Math.floor(Math.random() * 100)
+        const probablity = (this.#probability + extra_damage)
+
+        if (rand <= probablity) {
+            return this.#multiplier
+        }
+        return 0
+    }
+}
+
 class Sprite {
     #id
     #img
@@ -323,8 +339,9 @@ class BugLife{
 
     calcLife({damage, extraDamage, baseBugLife, bulletMode}) {
         const damageMode = bulletMode.getDamage()
+        const critical = Critical.tryCritical({extra_damage: extraDamage})
     
-        const damageComputed = (((damage + extraDamage)*damageMode)/100 * baseBugLife)
+        const damageComputed = (((damage + extraDamage)*damageMode)/100 * baseBugLife) + critical
 
         const current_life = (this.#width*2)/100*this.#life
         const new_life = (current_life-damageComputed)
