@@ -92,61 +92,33 @@ class CanvasArena{
     }
 }
 
-const MOB_EFFECTS = {
-    PHANTOM: 'phantom',
-    DIVIDE: 'divide',
-    EVENTS: {
-        LEVEL_UP: 'level_up',
-        DEAD: 'dead',
-        COLISION: 'colision'
-    },
-    EVENT: null,
-    reset() {
-        this.EVENT = null
-    },
-    phantomEffect() {
-        const phantoms = this.listMobsPhantoms()
+class Shop {
+    static #bullet
+    static #extra_damage
+    static #ininital_value = 2
+    static divBulletValue = document.querySelector('div.menu .item-bullet .value')
+    static divDamageValue = document.querySelector('div.menu .item-damage .value')
 
-        for (p of phantoms) {
-            if (this.EVENT == this.EVENTS.LEVEL_UP) {
-                if (p.dataset.effectActive==String(false) && (LEVEL % 2) == 0) {
-                    p.style.opacity = '0.1'
-                    p.dataset.effectActive = true
-                }else{
-                    p.style.opacity = '1'
-                    p.dataset.effectActive = false
-                }
-            }
-        }
-    },
-    divideEffect(pos) {
-        if(pos) { 
-            const mob = pos['grid'].querySelector('div');
-            
-            if (this.EVENT == this.EVENTS.DEAD && mob.dataset.effect == this.DIVIDE) {
-                const life = calcMobLife(pos)
+    static reset() {
+        this.#bullet = this.#ininital_value
+        this.#extra_damage = this.#ininital_value
+    }
 
-                if (life<=0) {
-                    setLogTerminal('Big Slime destruído, dos mini slime surgindo', true)
-                    sequenceDropCreature(2, MOBS[2])
-                }
-            }
-        }
-    },
-    listMobsPhantoms () {
-        const phantoms = document.querySelectorAll("div.arena li div[data-effect='phantom']")
-        return phantoms
-    },
-    listMobsEffectives() {
-        const effectives = document.querySelectorAll("div.arena li > div[data-effect]:not([data-effect='null'])")
-        return effectives
-    },
-    applyEffect(event, data) {
-        this.EVENT = event 
-        const grids = ARENA_GRIDS.filter(e => e['grid'].querySelector('div'))
+    static getBullet = () => this.#bullet
+    static getExtraDamage = () => this.#extra_damage
 
-        this.phantomEffect()
-        this.divideEffect(data)
+    static setBulletPrice = ({totalBullets}) => {
+        this.#bullet*= (totalBullets)
+    }
+
+    static setExtraDamagePrice = ({totalExtraDamage}) => {
+        this.#extra_damage*= (totalExtraDamage)
+    }
+
+
+    static displayValues = () => {
+        this.divBulletValue.innerHTML = this.#bullet
+        this.divDamageValue.innerHTML = this.#extra_damage
     }
 }
 
@@ -1025,7 +997,7 @@ class Controller{
         this.velocity = 10
         this.bullets = []
         this.bulletSize = 10
-        this.totalBullets = 10
+        this.totalBullets = 1
         this.bulletDelay = 10
         this.baseBugLife = 1000
         this.incrementBugLife = 3
@@ -1290,6 +1262,9 @@ class Controller{
         this.drawGameOver()
         this.displayLevel()
         this.displayPoints()
+        this.displayBullets()
+        this.displayDamage()
+        Shop.displayValues()
     }
 
     listBugsByEvent({event}) {
@@ -1417,7 +1392,67 @@ class Controller{
 
     displayPoints = () => {
         const divPoints = document.querySelector('div.points > span')
+        const divCoins = document.querySelector('div.menu .coins > .value')
         divPoints.innerHTML = this.player.getPoints()
+        divCoins.innerHTML = this.player.getPoints()
+    }
+
+    displayBullets = () => {
+        const divBullets = document.querySelector('div.menu .item-bullet .total')
+        divBullets.innerHTML = this.totalBullets
+    }
+
+    displayDamage = () => {
+        const divDamage = document.querySelector('div.menu .item-damage .total')
+        divDamage.innerHTML =this.player.getExtraDamage()
+    }
+
+    displayMenu = () => {
+        const divTitle = document.querySelector('div.title')
+        const btnClose = document.querySelector('div.menu .btn-close')
+        const divMenu = document.querySelector('div.menu')
+
+        divTitle.addEventListener('click', (_) => {    
+            divMenu.style.display = 'flex'
+        })
+
+        btnClose.addEventListener('click', (_) => {
+            divMenu.style.display = 'none'
+        })
+    }
+
+    updateBullets = () => {
+        const coins = this.player.getPoints() - Shop.getBullet()
+        if (coins<0) return false
+        if (this.level<1) return false
+
+        this.totalBullets++
+        Shop.setBulletPrice({totalBullets: this.totalBullets})
+        
+        this.player.setPoints(coins)
+    }
+
+    updateExtraDamage = () => {
+        const coins = this.player.getPoints() - Shop.getExtraDamage()
+        if (coins<0) return false
+        if (this.level<1) return false
+
+        const extraDamage = (this.player.getExtraDamage()+3)
+
+        this.player.setExtraDamage(extraDamage)
+        Shop.setExtraDamagePrice({totalExtraDamage: extraDamage})
+        
+        this.player.setPoints(coins)
+    }
+
+    shopActions = () => {
+        Shop.divBulletValue.addEventListener('click', (_) => {
+            this.updateBullets()
+        })
+
+        Shop.divDamageValue.addEventListener('click', (_) => {
+            this.updateExtraDamage()
+        })
     }
 
     DOMContentLoaded() {
@@ -1430,6 +1465,9 @@ class Controller{
             this.updateMousePosition()
             this.drawShooting()
             this.animate()
+            this.displayMenu()
+            this.shopActions()
+            Shop.reset()
         })
     }
 }
