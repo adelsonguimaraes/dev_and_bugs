@@ -183,6 +183,17 @@ div.shop > .items {
     position: sticky;
 }
 
+.item-bullet > .quantity-item, .item-damage > .quantity-item {
+    width: 20px;
+    height: 20px;
+    font-size: 14px;
+    color: #214671;
+    position: absolute;
+    top: 25px;
+    left: 20px;
+    font-weight: bold;
+}
+
 .item-bullet > .total{
     width: 20px;
     height: 20px;
