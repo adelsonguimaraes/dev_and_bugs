@@ -1070,7 +1070,7 @@ class Controller{
         this.canvasArena = new CanvasArena(this.blockHeight)
         this.player = new Player()
         this.blocks = []
-        this.velocity = 10
+        this.velocity = 3
         this.bullets = []
         this.bulletSize = 10
         this.totalBullets = 1
