@@ -90,6 +90,19 @@ class CanvasArena{
     clearDeadZone() {
         this.ctx.clearRect(0, this.canvasHeight - 80, this.canvasWith, 80)
     }
+
+    activeInsaneMode = () => {
+        if (!Alert.isAlerted({alert: Alert.INSANE_MODE})) {
+            this.canvas.style.filter = 'invert(85%)'
+            Alert.displayEventInfo({alert: Alert.INSANE_MODE})
+        }
+    }
+    desactiveInsaneMode = () => {
+        if (Alert.isAlerted({alert: Alert.INSANE_MODE})) {
+            this.canvas.style.filter = 'invert(0)'
+            Alert.desactiveAlerted({alert: Alert.INSANE_MODE})
+        }
+    }
 }
 
 class Shop {
@@ -876,6 +889,9 @@ class BulletModes {
         this.#point = point
     }
 
+    getId = () => this.#id
+    getName = () => this.#name
+
     getAceleration() {
         return this.#aceleration
     }
@@ -953,9 +969,13 @@ class Bullet {
         }
     }
 
-    incrementColisions() {
+    incrementColisions({canvas}) {
         this.#colisions++
         const mode = this.#modes.filter(e => e.getColisions() <= this.#colisions).at(-1)
+        
+        if (mode.getName() == 'Insane') {
+            canvas.activeInsaneMode()
+        }
         this.setMode(mode)
     }
 
@@ -1008,25 +1028,39 @@ class Bullet {
             new BulletModes({id: 1, name:'Normal', aceleration: 1, colisions: 0, color: '#7fff00', damage: 1, point: 1}),
             new BulletModes({id: 2, name:'Moderate', aceleration: 2, colisions: 15, color: '#ffa000', damage: 2, point: 2}),
             new BulletModes({id: 3, name:'High', aceleration: 3, colisions: 30, color: '#e22b2b', damage: 2.5, point: 3}),
-            new BulletModes({id: 4, name:'Insane', aceleration: 5, colisions: 50, color: 'white', damage: 3, point: 5})
+            new BulletModes({id: 4, name:'Insane', aceleration: 50, colisions: 5, color: 'white', damage: 3, point: 5})
         ]
     }
 }
 
 class Alert {
-    #id
-    #description
-    #alerted
-
-    constructor({id, description}) {
-        this.#id = id
-        this.#description = description
-        this.#alerted = false
+    static #timeout
+    static DROP_BUGS_3X = {
+        description: 'Level 30:<br>Drop de Bugs aumenta 3x',
+        alerted: false
+    }
+    static INSANE_MODE = {
+        description: 'INSANE MODE',
+        alerted: false
     }
 
-    getDescription = () => this.#description
-    getAlerted = () => this.#alerted
-    setAlerted = () => this.#alerted = true
+    static isAlerted = ({alert}) => alert.alerted
+    static activeAlerted = ({alert}) => alert.alerted = true
+    static desactiveAlerted = ({alert}) => alert.alerted = false
+
+    static displayEventInfo = ({alert}) => {
+        if (alert==undefined) return false
+        clearTimeout(this.#timeout)
+        
+        const divEventsInfo = document.querySelector('div.events-info')
+        divEventsInfo.style = 'display: flex'
+        divEventsInfo.innerHTML = alert.description
+        alert.alerted = true
+        this.#timeout = setTimeout((_)=>{
+            this.#timeout=null
+            divEventsInfo.style='display: none'
+    }, 3000)
+    }
 }
 
 class Controller{
@@ -1048,24 +1082,17 @@ class Controller{
         this.mousePosition = {x:null, y:null}
         this.on = false
         this.gameOver = false
-        this.alerts = this.createAlerts()
 
         this.DOMContentLoaded()
     }
 
-    createAlerts = () => {
-        return {
-            DROP_BUGS_3X: new Alert({id: 1, description: 'Level 30:<br>Drop de Bugs aumenta 3x'})
-        }
-    }
-
     controllerSequenceDrop = () => {
         if (this.level>=30) {
-            if (this.alerts.DROP_BUGS_3X.getAlerted()) return false
+            if (Alert.isAlerted({alert: Alert.DROP_BUGS_3X})) return false
             
             this.sequenceDrops=3
-            this.displayEventInfo({info: this.alerts.DROP_BUGS_3X.getDescription()})
-            this.alerts.DROP_BUGS_3X.setAlerted()
+            Alert.displayEventInfo({alert: Alert.DROP_BUGS_3X})
+            Alert.desactiveAlerted({alert: Alert.DROP_BUGS_3X})
         }
     }
 
@@ -1174,15 +1201,15 @@ class Controller{
 
         if ((left <= screen.offsetLeft && (bullet.getOrientationX()<0))) {
             bullet.toogleDirectionX()
-            bullet.incrementColisions()
+            bullet.incrementColisions({canvas: this.canvasArena})
             bullet.setCoords({x: coords.size})
         }else if (right >= (screen.offsetLeft + screen.width) && (bullet.getOrientationX()>0)) {
             bullet.toogleDirectionX()
-            bullet.incrementColisions()
+            bullet.incrementColisions({canvas: this.canvasArena})
             bullet.setCoords({x: screen.width - coords.size})
         }else if ((top <= screen.offsetTop) && (bullet.getOrientationY()>0)) {
             bullet.toogleDirectionY()
-            bullet.incrementColisions()
+            bullet.incrementColisions({canvas: this.canvasArena})
             bullet.setCoords({y: coords.size})
         }
         else if (bottom >= (screen.offsetTop+screen.height) && (bullet.getOrientationY()<0)) {
@@ -1196,7 +1223,7 @@ class Controller{
         const total = this.blocks.filter(e => e.bug != null).length
         if (total<=0) {
             this.player.setPoints(this.player.getPoints()*2)
-            this.displayEventInfo({info: 'Perfect'})    
+            Alert.displayEventInfo({info: 'Perfect'})    
         }
     }
 
@@ -1289,25 +1316,25 @@ class Controller{
 
         if (colisionLeftBug) {
             bullet.toogleDirectionX()
-            bullet.incrementColisions()
+            bullet.incrementColisions({canvas: this.canvasArena})
             bullet.setCoords({x: colisionLeftBug.x-coords.size})
             this.apllyBugDamage({block: colisionLeftBug, bullet: bullet})
 
         }else if (colisionRightBug) {
             bullet.toogleDirectionX()
-            bullet.incrementColisions()
+            bullet.incrementColisions({canvas: this.canvasArena})
             bullet.setCoords({x:colisionRightBug.x+colisionRightBug.width+coords.size})
             this.apllyBugDamage({block: colisionRightBug, bullet: bullet})
 
         }else if (colisionTopBug) {
             bullet.toogleDirectionY()
-            bullet.incrementColisions()
+            bullet.incrementColisions({canvas: this.canvasArena})
             bullet.setCoords({y:colisionTopBug.y-coords.size})
             this.apllyBugDamage({block: colisionTopBug, bullet: bullet})
 
         }else if (colisionBottomBug){
             bullet.toogleDirectionY()
-            bullet.incrementColisions()
+            bullet.incrementColisions({canvas: this.canvasArena})
             bullet.setCoords({y:colisionBottomBug.y+colisionBottomBug.height+coords.size})
             this.apllyBugDamage({block: colisionBottomBug, bullet: bullet})
         }
@@ -1347,6 +1374,7 @@ class Controller{
             this.player.resetMoviment()
             this.listBugsByEvent({event: BugEffects.events.LELVEL_UP})
             this.dropSequence({sequence: this.sequenceDrops})
+            this.canvasArena.desactiveInsaneMode()
         }
     }
 
@@ -1445,13 +1473,6 @@ class Controller{
     displayLevel = () => {
         const divLevel = document.querySelector('div.level > span')
         divLevel.innerHTML = this.level
-    }
-
-    displayEventInfo = ({info}) => {
-        const divEventsInfo = document.querySelector('div.events-info')
-        divEventsInfo.style = 'display: flex'
-        divEventsInfo.innerHTML = info
-        setTimeout((_)=>(divEventsInfo.style='display: none'), 3000)
     }
 
     displayPoints = () => {
