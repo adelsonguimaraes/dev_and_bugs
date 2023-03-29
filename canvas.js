@@ -1028,7 +1028,7 @@ class Bullet {
             new BulletModes({id: 1, name:'Normal', aceleration: 1, colisions: 0, color: '#7fff00', damage: 1, point: 1}),
             new BulletModes({id: 2, name:'Moderate', aceleration: 2, colisions: 15, color: '#ffa000', damage: 2, point: 2}),
             new BulletModes({id: 3, name:'High', aceleration: 3, colisions: 30, color: '#e22b2b', damage: 2.5, point: 3}),
-            new BulletModes({id: 4, name:'Insane', aceleration: 50, colisions: 5, color: 'white', damage: 3, point: 5})
+            new BulletModes({id: 4, name:'Insane', aceleration: 5, colisions: 50, color: 'white', damage: 3, point: 5})
         ]
     }
 }
