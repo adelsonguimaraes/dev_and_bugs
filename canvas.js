@@ -1025,10 +1025,10 @@ class Bullet {
 
     createModes() {
         this.#modes = [
-            new BulletModes({id: 1, name:'Normal', aceleration: 1, colisions: 0, color: '#7fff00', damage: 1, point: 1}),
+            new BulletModes({id: 1, name:'Normal', aceleration: 1.5, colisions: 0, color: '#7fff00', damage: 1, point: 1}),
             new BulletModes({id: 2, name:'Moderate', aceleration: 2, colisions: 15, color: '#ffa000', damage: 2, point: 2}),
-            new BulletModes({id: 3, name:'High', aceleration: 3, colisions: 30, color: '#e22b2b', damage: 2.5, point: 3}),
-            new BulletModes({id: 4, name:'Insane', aceleration: 5, colisions: 50, color: 'white', damage: 3, point: 5})
+            new BulletModes({id: 3, name:'High', aceleration: 2.5, colisions: 30, color: '#e22b2b', damage: 2.5, point: 3}),
+            new BulletModes({id: 4, name:'Insane', aceleration: 3, colisions: 50, color: 'white', damage: 3, point: 5})
         ]
     }
 }
@@ -1041,6 +1041,10 @@ class Alert {
     }
     static INSANE_MODE = {
         description: 'INSANE MODE',
+        alerted: false
+    }
+    static PERFECT = {
+        description: 'PERFECT',
         alerted: false
     }
 
@@ -1070,9 +1074,9 @@ class Controller{
         this.canvasArena = new CanvasArena(this.blockHeight)
         this.player = new Player()
         this.blocks = []
-        this.velocity = 3
+        this.velocity = 5
         this.bullets = []
-        this.bulletSize = 10
+        this.bulletSize = 2
         this.totalBullets = 1
         this.bulletDelay = 10
         this.baseBugLife = 1000
@@ -1092,7 +1096,6 @@ class Controller{
             
             this.sequenceDrops=3
             Alert.displayEventInfo({alert: Alert.DROP_BUGS_3X})
-            Alert.desactiveAlerted({alert: Alert.DROP_BUGS_3X})
         }
     }
 
@@ -1223,7 +1226,7 @@ class Controller{
         const total = this.blocks.filter(e => e.bug != null).length
         if (total<=0) {
             this.player.setPoints(this.player.getPoints()*2)
-            Alert.displayEventInfo({info: 'Perfect'})    
+            Alert.displayEventInfo({alert: Alert.PERFECT})    
         }
     }
 
