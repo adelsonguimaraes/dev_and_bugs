@@ -1,3 +1,10 @@
+class LoadData {
+    static get = async ({file}) => 
+        await fetch(file)
+            .then((response) => response.json())
+            .then((data) => data);   
+}
+
 class Block {
     constructor({x , y, bg, width, height, bug=null}) {
         this.x = x
@@ -192,6 +199,17 @@ class Sprite {
         this.#cropX = cropX
         this.#cropY = cropY
         this.#type = type
+    }
+
+    fromJson(data) {
+        this.#id = data.id
+        this.#img = data.img
+        this.#width = data.width
+        this.#height = data.height
+        this.#cropX = data.cropX
+        this.#cropY = data.cropY
+        this.#type = (data.type!=null) ? eval(data.type) : Sprite.types.NORMAL
+        return this
     }
 
     getImg = () => this.#img
@@ -768,11 +786,23 @@ class Boss {
     #life
     #sprites
 
-    constructor({id, name, life, sprites}) {
+    constructor({id = null, name = null, life = null, sprites = []}) {
         this.#id = id
         this.#name = name
         this.#life = life
         this.#sprites = sprites
+    }
+
+    fromJson(data) {
+        this.#id = data.id
+        this.#name = data.name
+        this.#life = data.life
+        data.sprites.forEach(e => {
+            const sprite = new Sprite({})
+            sprite.fromJson(e)
+            this.#sprites.push(sprite)
+        })
+        return this
     }
 
     getLife = () => this.#life
@@ -1088,19 +1118,20 @@ class Alert {
         description: 'PERFECT',
         alerted: false
     }
-
+    
     static isAlerted = ({alert}) => alert.alerted
     static activeAlerted = ({alert}) => alert.alerted = true
     static desactiveAlerted = ({alert}) => alert.alerted = false
 
     static displayEventInfo = ({alert}) => {
         if (alert==undefined) return false
+        const msg = (alert == String) ? alert : alert.description
         clearTimeout(this.#timeout)
         
         const divEventsInfo = document.querySelector('div.events-info')
         divEventsInfo.style = 'display: flex'
-        divEventsInfo.innerHTML = alert.description
-        alert.alerted = true
+        divEventsInfo.innerHTML = msg
+        if (alert == String) alert.alerted = true
         this.#timeout = setTimeout((_)=>{
             this.#timeout=null
             divEventsInfo.style='display: none'
@@ -1115,7 +1146,7 @@ class Controller{
         this.canvasArena = new CanvasArena(this.blockHeight)
         this.player = new Player()
         this.blocks = []
-        this.velocity = 5
+        this.velocity = 10
         this.bullets = []
         this.bulletSize = 2
         this.totalBullets = 1
@@ -1127,297 +1158,31 @@ class Controller{
         this.mousePosition = {x:null, y:null}
         this.on = false
         this.gameOver = false
-        this.bosses = {}
+        this.bosses = []
         this.dungeons = []
 
         this.DOMContentLoaded()
     }
 
-    createBosses = () => obj = {
-        DEMON_BOSS: new Boss({
-            id: 1, name: 'Demon Boss', 
-            sprites: [
-                new Sprite({
-                    id: 1,
-                    img: './img/sprites/demon_boss_sprites.png',
-                    cropX: 0,
-                    cropY: 10,
-                    width: 230,
-                    height: 230
-                }),
-                new Sprite({
-                    id: 2,
-                    img: './img/sprites/demon_boss_sprites.png',
-                    cropX: 219,
-                    cropY: 10,
-                    width: 230,
-                    height: 230
-                }),
-                new Sprite({
-                    id: 3,
-                    img: './img/sprites/demon_boss_sprites.png',
-                    cropX: 440,
-                    cropY: 10,
-                    width: 230,
-                    height: 230
-                }),
-                new Sprite({
-                    id: 4,
-                    img: './img/sprites/demon_boss_sprites.png',
-                    cropX: 660,
-                    cropY: 0,
-                    width: 230,
-                    height: 230
-                }),
-                new Sprite({
-                    id: 5,
-                    img: './img/sprites/demon_boss_sprites.png',
-                    cropX: 880,
-                    cropY: 0,
-                    width: 230,
-                    height: 230
-                }),
-                new Sprite({
-                    id: 6,
-                    img: './img/sprites/demon_boss_sprites.png',
-                    cropX: 0,
-                    cropY: 280,
-                    width: 230,
-                    height: 230
-                })
-            ]
-        }),
-        BAT_BOSS: new Boss({
-            id: 2, name: 'Bat Boss', 
-            sprites: [
-                new Sprite({
-                    id: 1,
-                    img: './img/sprites/bat_boss_sprite.png',
-                    cropX: 0,
-                    cropY: 0,
-                    width: 200,
-                    height: 200
-                }),
-                new Sprite({
-                    id: 2,
-                    img: './img/sprites/bat_boss_sprite.png',
-                    cropX: 200,
-                    cropY: 0,
-                    width: 200,
-                    height: 200
-                }),
-                new Sprite({
-                    id: 3,
-                    img: './img/sprites/bat_boss_sprite.png',
-                    cropX: 400,
-                    cropY: 0,
-                    width: 200,
-                    height: 200,
-                    type: Sprite.types.EFFECT
-                }),
-                new Sprite({
-                    id: 4,
-                    img: './img/sprites/bat_boss_sprite.png',
-                    cropX: 600,
-                    cropY: 0,
-                    width: 200,
-                    height: 200,
-                    type: Sprite.types.EFFECT
-                })
-            ]
-        }),
-        BIG_SLIME_BOSS: new Boss({
-            id: 3, name: 'Big Slime Boss', 
-            sprites: [
-                new Sprite({
-                    id: 1,
-                    img: './img/sprites/big_slime_boss_sprite.png',
-                    cropX: 0,
-                    cropY: 0,
-                    width: 365,
-                    height: 360
-                }),
-                new Sprite({
-                    id: 2,
-                    img: './img/sprites/big_slime_boss_sprite.png',
-                    cropX: 365,
-                    cropY: 0,
-                    width: 365,
-                    height: 360
-                }),
-                new Sprite({
-                    id: 3,
-                    img: './img/sprites/big_slime_boss_sprite.png',
-                    cropX: 730,
-                    cropY: 0,
-                    width: 365,
-                    height: 360
-                }),
-                new Sprite({
-                    id: 4,
-                    img: './img/sprites/big_slime_boss_sprite.png',
-                    cropX: 1085,
-                    cropY: 0,
-                    width: 365,
-                    height: 360
-                }),
-                new Sprite({
-                    id: 5,
-                    img: './img/sprites/big_slime_boss_sprite.png',
-                    cropX: 1438,
-                    cropY: 0,
-                    width: 365,
-                    height: 360
-                }),
-                new Sprite({
-                    id: 6,
-                    img: './img/sprites/big_slime_boss_sprite.png',
-                    cropX: 0,
-                    cropY: 360,
-                    width: 365,
-                    height: 360
-                }),
-                new Sprite({
-                    id: 7,
-                    img: './img/sprites/big_slime_boss_sprite.png',
-                    cropX: 365,
-                    cropY: 360,
-                    width: 365,
-                    height: 360
-                }),
-            ]
-        }),
-        SLIME_BOSS: new Boss({
-            id: 4, name: 'Slime Boss', 
-            sprites: [
-                new Sprite({
-                    id: 1,
-                    img: './img/sprites/slime_boss_sprite.png',
-                    cropX: 40,
-                    cropY: 80,
-                    width: 280,
-                    height: 280
-                }),
-                new Sprite({
-                    id: 2,
-                    img: './img/sprites/slime_boss_sprite.png',
-                    cropX: 400,
-                    cropY: 80,
-                    width: 280,
-                    height: 280
-                }),
-                new Sprite({
-                    id: 3,
-                    img: './img/sprites/slime_boss_sprite.png',
-                    cropX: 750,
-                    cropY: 80,
-                    width: 280,
-                    height: 280
-                }),
-                new Sprite({
-                    id: 4,
-                    img: './img/sprites/slime_boss_sprite.png',
-                    cropX: 1120,
-                    cropY: 80,
-                    width: 280,
-                    height: 280
-                }),
-                new Sprite({
-                    id: 5,
-                    img: './img/sprites/slime_boss_sprite.png',
-                    cropX: 1480,
-                    cropY: 80,
-                    width: 280,
-                    height: 280
-                }),
-                new Sprite({
-                    id: 6,
-                    img: './img/sprites/slime_boss_sprite.png',
-                    cropX: 40,
-                    cropY: 440,
-                    width: 280,
-                    height: 280
-                }),
-                new Sprite({
-                    id: 7,
-                    img: './img/sprites/slime_boss_sprite.png',
-                    cropX: 400,
-                    cropY: 440,
-                    width: 280,
-                    height: 280
-                }),
-                new Sprite({
-                    id: 8,
-                    img: './img/sprites/slime_boss_sprite.png',
-                    cropX: 750,
-                    cropY: 440,
-                    width: 280,
-                    height: 280
-                }),
-                new Sprite({
-                    id: 9,
-                    img: './img/sprites/slime_boss_sprite.png',
-                    cropX: 1120,
-                    cropY: 440,
-                    width: 280,
-                    height: 280
-                }),
-                new Sprite({
-                    id: 10,
-                    img: './img/sprites/slime_boss_sprite.png',
-                    cropX: 1480,
-                    cropY: 440,
-                    width: 280,
-                    height: 280
-                }),
-                new Sprite({
-                    id: 11,
-                    img: './img/sprites/slime_boss_sprite.png',
-                    cropX: 40,
-                    cropY: 800,
-                    width: 280,
-                    height: 280
-                }),
-                new Sprite({
-                    id: 12,
-                    img: './img/sprites/slime_boss_sprite.png',
-                    cropX: 400,
-                    cropY: 800,
-                    width: 280,
-                    height: 280
-                }),
-                new Sprite({
-                    id: 13,
-                    img: './img/sprites/slime_boss_sprite.png',
-                    cropX: 750,
-                    cropY: 800,
-                    width: 280,
-                    height: 280
-                }),
-                new Sprite({
-                    id: 14,
-                    img: './img/sprites/slime_boss_sprite.png',
-                    cropX: 1120,
-                    cropY: 940,
-                    width: 280,
-                    height: 280
-                })
-            ]
-        }),
+    createBosses = async () => {
+        const data = await LoadData.get({file: './data/bosses.json'})
+        data.forEach(e => this.bosses.push(new Boss({}).fromJson(e)));
     }
 
     createDungeons = () => {
         this.dungeons = [
-            new Dungeon({id: 1, name: 'Amarela', level: 50, multiplier: 60, color: '#221a06', boss: this.bosses.DEMON_BOSS}),
-            new Dungeon({id: 2, name: 'Roxa', level: 100, multiplier: 70, color: '#221628', boss: this.bosses.BAT_BOSS}),
-            new Dungeon({id: 3, name: 'Azul', level: 150, multiplier: 80, color: '#090b20', boss: this.bosses.BIG_SLIME_BOSS}),
-            new Dungeon({id: 4, name: 'Branca', level: 200, multiplier: 90, color: '#a18b8b', boss: this.bosses.SLIME_BOSS}),
+            new Dungeon({id: 1, name: 'Amarela', level: 2, multiplier: 60, color: '#221a06', boss: this.bosses[0]}),
+            new Dungeon({id: 2, name: 'Roxa', level: 100, multiplier: 70, color: '#221628', boss: this.bosses[1]}),
+            new Dungeon({id: 3, name: 'Azul', level: 150, multiplier: 80, color: '#090b20', boss: this.bosses[2]}),
+            new Dungeon({id: 4, name: 'Branca', level: 200, multiplier: 90, color: '#a18b8b', boss: this.bosses[3]}),
         ]
     }
 
     enterInDungeon = () => {
         const dungeon = this.dungeons.find(e => e.getLevel() == this.level)
+
         if (dungeon!=null) {
+            
             console.log('entrando na Dungeon ' + dungeon.getName());
         }
     }
@@ -1876,11 +1641,13 @@ class Controller{
         })
     }
 
-    DOMContentLoaded() {
-        document.addEventListener('DOMContentLoaded', (_) => {
+    DOMContentLoaded = async () => {
+        document.addEventListener('DOMContentLoaded', async (_) => {
             this.canvasArena.getCanvas()
             this.canvasArena.setCanvasConfig()
             this.canvasArena.createGrid({width: this.blockWidth, height: this.blockHeight, blocks: this.blocks})
+            await this.createBosses()
+            this.createDungeons()
             this.dropSequence({sequence: this.sequenceDrops})
             this.player.draw({canvas: this.canvasArena})
             this.updateMousePosition()
@@ -1889,6 +1656,7 @@ class Controller{
             this.displayMenu()
             this.shopActions()
             Shop.reset()
+
         })
     }
 }
