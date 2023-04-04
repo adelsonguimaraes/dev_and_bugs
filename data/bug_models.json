@@ -1,0 +1,316 @@
+[
+    {
+        "id": 1,
+        "name": "Demon",
+        "description": "Surge em todos os leveis",
+        "allowedCollisions": {
+            "lerf": true,
+            "right": true,
+            "top": true,
+            "bottom": true
+        },
+        "effect": null,
+        "emergenceLevel": 0,
+        "rangeRaffle": {"min": 0, "max": 100},
+        "sprites": [
+            {
+                "id": 1,
+                "img": "./img/sprites/demon_sprites.png",
+                "cropX": 0,
+                "cropY": 10,
+                "width": 230,
+                "height": 230
+            },
+            {
+                "id": 2,
+                "img": "./img/sprites/demon_sprites.png",
+                "cropX": 219,
+                "cropY": 10,
+                "width": 230,
+                "height": 230
+            },
+            {
+                "id": 3,
+                "img": "./img/sprites/demon_sprites.png",
+                "cropX": 440,
+                "cropY": 10,
+                "width": 230,
+                "height": 230
+            },
+            {
+                "id": 4,
+                "img": "./img/sprites/demon_sprites.png",
+                "cropX": 660,
+                "cropY": 0,
+                "width": 230,
+                "height": 230
+            },
+            {
+                "id": 5,
+                "img": "./img/sprites/demon_sprites.png",
+                "cropX": 880,
+                "cropY": 0,
+                "width": 230,
+                "height": 230
+            },
+            {
+                "id": 6,
+                "img": "./img/sprites/demon_sprites.png",
+                "cropX": 0,
+                "cropY": 280,
+                "width": 230,
+                "height": 230
+            }
+        ]
+    },
+    {
+        "id": 2,
+        "name": "Bat",
+        "description": "Se torna oculto entre os leveis",
+        "allowedCollisions": {
+            "lerf": true,
+            "right": true,
+            "top": true,
+            "bottom": true
+        },
+        "effect": "phantom",
+        "emergenceLevel": 10,
+        "rangeRaffle": {"min": 20, "max": 40},
+        "sprites": [
+            {
+                "id": 1,
+                "img": "./img/sprites/bat_sprite.png",
+                "cropX": 0,
+                "cropY": 0,
+                "width": 200,
+                "height": 200
+            },
+            {
+                "id": 2,
+                "img": "./img/sprites/bat_sprite.png",
+                "cropX": 200,
+                "cropY": 0,
+                "width": 200,
+                "height": 200
+            },
+            {
+                "id": 3,
+                "img": "./img/sprites/bat_sprite.png",
+                "cropX": 400,
+                "cropY": 0,
+                "width": 200,
+                "height": 200,
+                "type": 1
+            },
+            {
+                "id": 4,
+                "img": "./img/sprites/bat_sprite.png",
+                "cropX": 600,
+                "cropY": 0,
+                "width": 200,
+                "height": 200,
+                "type": 1
+            }
+        ]
+    },
+    {
+        "id": 3,
+        "name": "Slime",
+        "description": "Surge quando um Big Slime é derrotado",
+        "allowedCollisions": {
+            "lerf": true,
+            "right": true,
+            "top": true,
+            "bottom": true
+        },
+        "effect": null,
+        "emergenceLevel": null,
+        "rangeRaffle": null,
+        "sprites": [
+            {
+                "id": 1,
+                "img": "./img/sprites/slime_sprite.png",
+                "cropX": 40,
+                "cropY": 80,
+                "width": 280,
+                "height": 280
+            },
+            {
+                "id": 2,
+                "img": "./img/sprites/slime_sprite.png",
+                "cropX": 400,
+                "cropY": 80,
+                "width": 280,
+                "height": 280
+            },
+            {
+                "id": 3,
+                "img": "./img/sprites/slime_sprite.png",
+                "cropX": 750,
+                "cropY": 80,
+                "width": 280,
+                "height": 280
+            },
+            {
+                "id": 4,
+                "img": "./img/sprites/slime_sprite.png",
+                "cropX": 1120,
+                "cropY": 80,
+                "width": 280,
+                "height": 280
+            },
+            {
+                "id": 5,
+                "img": "./img/sprites/slime_sprite.png",
+                "cropX": 1480,
+                "cropY": 80,
+                "width": 280,
+                "height": 280
+            },
+            {
+                "id": 6,
+                "img": "./img/sprites/slime_sprite.png",
+                "cropX": 40,
+                "cropY": 440,
+                "width": 280,
+                "height": 280
+            },
+            {
+                "id": 7,
+                "img": "./img/sprites/slime_sprite.png",
+                "cropX": 400,
+                "cropY": 440,
+                "width": 280,
+                "height": 280
+            },
+            {
+                "id": 8,
+                "img": "./img/sprites/slime_sprite.png",
+                "cropX": 750,
+                "cropY": 440,
+                "width": 280,
+                "height": 280
+            },
+            {
+                "id": 9,
+                "img": "./img/sprites/slime_sprite.png",
+                "cropX": 1120,
+                "cropY": 440,
+                "width": 280,
+                "height": 280
+            },
+            {
+                "id": 10,
+                "img": "./img/sprites/slime_sprite.png",
+                "cropX": 1480,
+                "cropY": 440,
+                "width": 280,
+                "height": 280
+            },
+            {
+                "id": 11,
+                "img": "./img/sprites/slime_sprite.png",
+                "cropX": 40,
+                "cropY": 800,
+                "width": 280,
+                "height": 280
+            },
+            {
+                "id": 12,
+                "img": "./img/sprites/slime_sprite.png",
+                "cropX": 400,
+                "cropY": 800,
+                "width": 280,
+                "height": 280
+            },
+            {
+                "id": 13,
+                "img": "./img/sprites/slime_sprite.png",
+                "cropX": 750,
+                "cropY": 800,
+                "width": 280,
+                "height": 280
+            },
+            {
+                "id": 14,
+                "img": "./img/sprites/slime_sprite.png",
+                "cropX": 1120,
+                "cropY": 940,
+                "width": 280,
+                "height": 280
+            }
+        ]
+    },
+    {
+        "id": 4,
+        "name": "Big Slime",
+        "description": "Ao ser derrotado se divide em dois slimes",
+        "allowedCollisions": {
+            "lerf": true,
+            "right": true,
+            "top": true,
+            "bottom": true
+        },
+        "effect": "divide",
+        "emergenceLevel": 20,
+        "rangeRaffle": {"min": 55, "max": 58},
+        "sprites": [
+            {
+                "id": 1,
+                "img": "./img/sprites/big_slime_sprite.png",
+                "cropX": 0,
+                "cropY": 0,
+                "width": 365,
+                "height": 360
+            },
+            {
+                "id": 2,
+                "img": "./img/sprites/big_slime_sprite.png",
+                "cropX": 365,
+                "cropY": 0,
+                "width": 365,
+                "height": 360
+            },
+            {
+                "id": 3,
+                "img": "./img/sprites/big_slime_sprite.png",
+                "cropX": 730,
+                "cropY": 0,
+                "width": 365,
+                "height": 360
+            },
+            {
+                "id": 4,
+                "img": "./img/sprites/big_slime_sprite.png",
+                "cropX": 1085,
+                "cropY": 0,
+                "width": 365,
+                "height": 360
+            },
+            {
+                "id": 5,
+                "img": "./img/sprites/big_slime_sprite.png",
+                "cropX": 1438,
+                "cropY": 0,
+                "width": 365,
+                "height": 360
+            },
+            {
+                "id": 6,
+                "img": "./img/sprites/big_slime_sprite.png",
+                "cropX": 0,
+                "cropY": 360,
+                "width": 365,
+                "height": 360
+            },
+            {
+                "id": 7,
+                "img": "./img/sprites/big_slime_sprite.png",
+                "cropX": 365,
+                "cropY": 360,
+                "width": 365,
+                "height": 360
+            }
+        ]
+    }
+]

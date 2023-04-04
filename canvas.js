@@ -149,6 +149,16 @@ class AllowedCollisions {
         this.top = top
         this.bottom = bottom
     }
+
+    fromJson = (data) => {
+        if (data==null) return data
+
+        this.left = data.left
+        this.right = data.right
+        this.top = data.top
+        this.bottom = data.bottom
+        return this
+    }
 }
 
 class RangeRaffle {
@@ -158,6 +168,14 @@ class RangeRaffle {
     constructor({min, max}) {
         this.#min = min
         this.#max = max
+    }
+
+    fromJson = (data) => {
+        if (data==null) return data
+
+        this.#min = data.min
+        this.#max = data.max
+        return this
     }
 
     getMin = () => this.#min
@@ -241,6 +259,12 @@ class BugEffects {
         this.#action = action
     }
 
+    fromJson = ({data}) => {
+        this.#name = data.name
+        this.#event = data.event
+        this.#action = data.action
+    }
+
     getName = () => this.#name
     
     getEvent = () => this.#event
@@ -288,7 +312,7 @@ class BugModels {
     #alertDrop
     static effects = this.#createEffects()
 
-    constructor({id, name, sprites, description, allowedCollisions, effect, emergenceLevel, rangeRaffle}) {
+    constructor({id, name, sprites = [], description, allowedCollisions, effect, emergenceLevel, rangeRaffle}) {
         this.#id = id
         this.#name = name
         this.#sprites = sprites
@@ -298,6 +322,23 @@ class BugModels {
         this.#emergenceLevel = emergenceLevel
         this.#rangeRaffle = rangeRaffle
         this.#alertDrop = false
+    }
+
+    fromJson = (data) => {
+        this.#id = data.id
+        this.#name = data.name
+        this.#description = data.description
+        this.#allowedCollisions = new AllowedCollisions({}).fromJson({data: data.allowedCollisions})
+        this.#effect = data.effect
+        this.#emergenceLevel = data.emergenceLevel
+        this.#rangeRaffle = new RangeRaffle({}).fromJson(data.rangeRaffle)
+        this.#alertDrop = data.alertDrop
+        data.sprites.forEach(e => {
+            const sprite = new Sprite({})
+            sprite.fromJson(e)
+            this.#sprites.push(sprite)
+        })
+        return this
     }
 
     getEffect = () => this.#effect
@@ -384,7 +425,7 @@ class BugLife{
 }
 
 class Bug{
-    static models = this.#createModels()
+    static models = []
 
     constructor({model = null}) {
         this.life = null
@@ -480,303 +521,9 @@ class Bug{
         this.setModel(model)
     }
 
-    static #createModels() {
-        return [
-            new BugModels({
-                id: 1,
-                name: 'Demon',
-                description: 'Surge em todos os leveis',
-                allowedCollisions: new AllowedCollisions(),
-                effect: null,
-                emergenceLevel: 0,
-                rangeRaffle: new RangeRaffle({min: 0, max: 100}),
-                sprites: [
-                    new Sprite({
-                        id: 1,
-                        img: './img/sprites/demon_sprites.png',
-                        cropX: 0,
-                        cropY: 10,
-                        width: 230,
-                        height: 230
-                    }),
-                    new Sprite({
-                        id: 2,
-                        img: './img/sprites/demon_sprites.png',
-                        cropX: 219,
-                        cropY: 10,
-                        width: 230,
-                        height: 230
-                    }),
-                    new Sprite({
-                        id: 3,
-                        img: './img/sprites/demon_sprites.png',
-                        cropX: 440,
-                        cropY: 10,
-                        width: 230,
-                        height: 230
-                    }),
-                    new Sprite({
-                        id: 4,
-                        img: './img/sprites/demon_sprites.png',
-                        cropX: 660,
-                        cropY: 0,
-                        width: 230,
-                        height: 230
-                    }),
-                    new Sprite({
-                        id: 5,
-                        img: './img/sprites/demon_sprites.png',
-                        cropX: 880,
-                        cropY: 0,
-                        width: 230,
-                        height: 230
-                    }),
-                    new Sprite({
-                        id: 6,
-                        img: './img/sprites/demon_sprites.png',
-                        cropX: 0,
-                        cropY: 280,
-                        width: 230,
-                        height: 230
-                    })
-                ]
-            }),
-            new BugModels({
-                id: 2,
-                name: 'Bat',
-                description: 'Se torna oculto entre os leveis',
-                allowerdCollisions: new AllowedCollisions(),
-                effect: BugModels.effects.PHANTOM,
-                emergenceLevel: 10,
-                rangeRaffle: new RangeRaffle({min: 20, max: 40}),
-                sprites: [
-                    new Sprite({
-                        id: 1,
-                        img: './img/sprites/bat_sprite.png',
-                        cropX: 0,
-                        cropY: 0,
-                        width: 200,
-                        height: 200
-                    }),
-                    new Sprite({
-                        id: 2,
-                        img: './img/sprites/bat_sprite.png',
-                        cropX: 200,
-                        cropY: 0,
-                        width: 200,
-                        height: 200
-                    }),
-                    new Sprite({
-                        id: 3,
-                        img: './img/sprites/bat_sprite.png',
-                        cropX: 400,
-                        cropY: 0,
-                        width: 200,
-                        height: 200,
-                        type: Sprite.types.EFFECT
-                    }),
-                    new Sprite({
-                        id: 4,
-                        img: './img/sprites/bat_sprite.png',
-                        cropX: 600,
-                        cropY: 0,
-                        width: 200,
-                        height: 200,
-                        type: Sprite.types.EFFECT
-                    })
-                ]
-            }),
-            new BugModels({
-                id: 3,
-                name: 'Slime',
-                description: 'Surge quando um Big Slime é derrotado',
-                allowerdCollisions: new AllowedCollisions(),
-                effect: null,
-                emergenceLevel: null,
-                rangeRaffle: null,
-                sprites: [
-                    new Sprite({
-                        id: 1,
-                        img: './img/sprites/slime_sprite.png',
-                        cropX: 40,
-                        cropY: 80,
-                        width: 280,
-                        height: 280
-                    }),
-                    new Sprite({
-                        id: 2,
-                        img: './img/sprites/slime_sprite.png',
-                        cropX: 400,
-                        cropY: 80,
-                        width: 280,
-                        height: 280
-                    }),
-                    new Sprite({
-                        id: 3,
-                        img: './img/sprites/slime_sprite.png',
-                        cropX: 750,
-                        cropY: 80,
-                        width: 280,
-                        height: 280
-                    }),
-                    new Sprite({
-                        id: 4,
-                        img: './img/sprites/slime_sprite.png',
-                        cropX: 1120,
-                        cropY: 80,
-                        width: 280,
-                        height: 280
-                    }),
-                    new Sprite({
-                        id: 5,
-                        img: './img/sprites/slime_sprite.png',
-                        cropX: 1480,
-                        cropY: 80,
-                        width: 280,
-                        height: 280
-                    }),
-                    new Sprite({
-                        id: 6,
-                        img: './img/sprites/slime_sprite.png',
-                        cropX: 40,
-                        cropY: 440,
-                        width: 280,
-                        height: 280
-                    }),
-                    new Sprite({
-                        id: 7,
-                        img: './img/sprites/slime_sprite.png',
-                        cropX: 400,
-                        cropY: 440,
-                        width: 280,
-                        height: 280
-                    }),
-                    new Sprite({
-                        id: 8,
-                        img: './img/sprites/slime_sprite.png',
-                        cropX: 750,
-                        cropY: 440,
-                        width: 280,
-                        height: 280
-                    }),
-                    new Sprite({
-                        id: 9,
-                        img: './img/sprites/slime_sprite.png',
-                        cropX: 1120,
-                        cropY: 440,
-                        width: 280,
-                        height: 280
-                    }),
-                    new Sprite({
-                        id: 10,
-                        img: './img/sprites/slime_sprite.png',
-                        cropX: 1480,
-                        cropY: 440,
-                        width: 280,
-                        height: 280
-                    }),
-                    new Sprite({
-                        id: 11,
-                        img: './img/sprites/slime_sprite.png',
-                        cropX: 40,
-                        cropY: 800,
-                        width: 280,
-                        height: 280
-                    }),
-                    new Sprite({
-                        id: 12,
-                        img: './img/sprites/slime_sprite.png',
-                        cropX: 400,
-                        cropY: 800,
-                        width: 280,
-                        height: 280
-                    }),
-                    new Sprite({
-                        id: 13,
-                        img: './img/sprites/slime_sprite.png',
-                        cropX: 750,
-                        cropY: 800,
-                        width: 280,
-                        height: 280
-                    }),
-                    new Sprite({
-                        id: 14,
-                        img: './img/sprites/slime_sprite.png',
-                        cropX: 1120,
-                        cropY: 940,
-                        width: 280,
-                        height: 280
-                    })
-                ]
-            }),
-            new BugModels({
-                id: 4,
-                name: 'Big Slime',
-                description: 'Ao ser derrotado se divide em dois slimes',
-                allowerdCollisions: new AllowedCollisions(),
-                effect: BugModels.effects.DIVIDE,
-                emergenceLevel: 20,
-                rangeRaffle: new RangeRaffle({min: 55, max: 58}),
-                sprites: [
-                    new Sprite({
-                        id: 1,
-                        img: './img/sprites/big_slime_sprite.png',
-                        cropX: 0,
-                        cropY: 0,
-                        width: 365,
-                        height: 360
-                    }),
-                    new Sprite({
-                        id: 2,
-                        img: './img/sprites/big_slime_sprite.png',
-                        cropX: 365,
-                        cropY: 0,
-                        width: 365,
-                        height: 360
-                    }),
-                    new Sprite({
-                        id: 3,
-                        img: './img/sprites/big_slime_sprite.png',
-                        cropX: 730,
-                        cropY: 0,
-                        width: 365,
-                        height: 360
-                    }),
-                    new Sprite({
-                        id: 4,
-                        img: './img/sprites/big_slime_sprite.png',
-                        cropX: 1085,
-                        cropY: 0,
-                        width: 365,
-                        height: 360
-                    }),
-                    new Sprite({
-                        id: 5,
-                        img: './img/sprites/big_slime_sprite.png',
-                        cropX: 1438,
-                        cropY: 0,
-                        width: 365,
-                        height: 360
-                    }),
-                    new Sprite({
-                        id: 6,
-                        img: './img/sprites/big_slime_sprite.png',
-                        cropX: 0,
-                        cropY: 360,
-                        width: 365,
-                        height: 360
-                    }),
-                    new Sprite({
-                        id: 7,
-                        img: './img/sprites/big_slime_sprite.png',
-                        cropX: 365,
-                        cropY: 360,
-                        width: 365,
-                        height: 360
-                    }),
-                ]
-            }),
-        ]
+    static createModels = async () => {
+        const data = await LoadData.get({file: './data/bug_models.json'})
+        data.forEach(e => this.models.push(new BugModels({}).fromJson(e)));
     }
 }
 
@@ -1641,12 +1388,13 @@ class Controller{
         })
     }
 
-    DOMContentLoaded = async () => {
+    DOMContentLoaded = () => {
         document.addEventListener('DOMContentLoaded', async (_) => {
+            await Bug.createModels()
+            await this.createBosses()
             this.canvasArena.getCanvas()
             this.canvasArena.setCanvasConfig()
             this.canvasArena.createGrid({width: this.blockWidth, height: this.blockHeight, blocks: this.blocks})
-            await this.createBosses()
             this.createDungeons()
             this.dropSequence({sequence: this.sequenceDrops})
             this.player.draw({canvas: this.canvasArena})
@@ -1656,6 +1404,7 @@ class Controller{
             this.displayMenu()
             this.shopActions()
             Shop.reset()
+
 
         })
     }
