@@ -329,7 +329,7 @@ class BugModels {
         this.#name = data.name
         this.#description = data.description
         this.#allowedCollisions = new AllowedCollisions({}).fromJson({data: data.allowedCollisions})
-        this.#effect = data.effect
+        this.#effect = (data.effect == null) ? null : BugModels.effects[data.effect.toUpperCase()]
         this.#emergenceLevel = data.emergenceLevel
         this.#rangeRaffle = new RangeRaffle({}).fromJson(data.rangeRaffle)
         this.#alertDrop = data.alertDrop
@@ -338,6 +338,8 @@ class BugModels {
             sprite.fromJson(e)
             this.#sprites.push(sprite)
         })
+        console.log(this);
+
         return this
     }
 
