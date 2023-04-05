@@ -563,6 +563,7 @@ class Dungeon {
     #boss
     #multiplier
     #color
+    #inside
 
     constructor({id, name, level, boss, multiplier, color}) {
         this.#id = id
@@ -571,6 +572,7 @@ class Dungeon {
         this.#boss = boss
         this.#multiplier = multiplier
         this.#color = color
+        this.#inside = false
     }
 
     getName = () => this.#name
@@ -578,6 +580,8 @@ class Dungeon {
     getBoss = () => this.#boss
     getColose = () => this.#color
     getComputedBossLife = () => this.#boss.getLife() * this.#multiplier
+    toEnter = () => this.#inside = true
+    toGoOut = () => this.#inside = false
 }
 
 class Player {
@@ -872,7 +876,7 @@ class Alert {
 
     static displayEventInfo = ({alert}) => {
         if (alert==undefined) return false
-        const msg = (alert == String) ? alert : alert.description
+        const msg = (typeof(alert) == 'string') ? alert : alert.description
         clearTimeout(this.#timeout)
         
         const divEventsInfo = document.querySelector('div.events-info')
@@ -929,8 +933,9 @@ class Controller{
         const dungeon = this.dungeons.find(e => e.getLevel() == this.level)
 
         if (dungeon!=null) {
-            
-            console.log('entrando na Dungeon ' + dungeon.getName());
+            dungeon.toEnter()
+            const msg = `Dugeon ${dungeon.getName()}`
+            Alert.displayEventInfo({alert: msg})
         }
     }
 
