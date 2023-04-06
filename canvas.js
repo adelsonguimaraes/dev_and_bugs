@@ -39,6 +39,8 @@ class Block {
 }
 
 class CanvasArena{
+    #initialColor = "#1f1f1f"
+
     constructor(size) {
         this.canvas = null
         this.ctx = null
@@ -51,6 +53,11 @@ class CanvasArena{
         this.gridBg2 = '#34343481'
     }
 
+    resetColor = () => this.setColor({color: this.#initialColor})
+    setColor = ({color}) => {
+        this.canvas.style.backgroundColor = color
+    }
+
     getCenter() {
         return {x: this.canvasWith/2, y: this.canvasHeight/2}
     }
@@ -61,7 +68,7 @@ class CanvasArena{
     }
 
     setCanvasConfig() {
-        this.ctx.fillStyle = '#1f1f1f'
+        // this.ctx.fillStyle = '#1f1f1f'
         this.canvas.width = this.canvasWith
         this.canvas.height = this.canvasHeight
         this.ctx.fillRect(0, 0, this.canvasWith, this.canvasHeigth)
@@ -338,7 +345,6 @@ class BugModels {
             sprite.fromJson(e)
             this.#sprites.push(sprite)
         })
-        console.log(this);
 
         return this
     }
@@ -580,7 +586,7 @@ class Dungeon {
     getName = () => this.#name
     getLevel =() => this.#level
     getBoss = () => this.#boss
-    getColose = () => this.#color
+    getColor = () => this.#color
     getComputedBossLife = () => this.#boss.getLife() * this.#multiplier
     toEnter = () => this.#inside = true
     toGoOut = () => this.#inside = false
@@ -938,6 +944,7 @@ class Controller{
             dungeon.toEnter()
             const msg = `Dugeon ${dungeon.getName()}`
             Alert.displayEventInfo({alert: msg})
+            this.canvasArena.setColor({color: dungeon.getColor()})
         }
     }
 
