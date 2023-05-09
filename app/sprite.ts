@@ -5,7 +5,7 @@ interface SpriteInterface {
     height:number
     cropX:number
     cropY:number
-    type?:string
+    type?:number
 }
 
 export class Sprite {
@@ -19,7 +19,7 @@ export class Sprite {
     
     static types = this.setTypes()
 
-    constructor({id, img, width, height, cropX, cropY, type=Sprite.types.NORMAL}) {
+    constructor({id, img, width, height, cropX, cropY, type=Sprite.types.NORMAL}:SpriteInterface) {
         this.id = id
         this.img = img
         this.width = width
@@ -29,15 +29,9 @@ export class Sprite {
         this.type = type
     }
 
-    fromJson(data:SpriteInterface):Sprite {
-        this.id = data.id
-        this.img = data.img
-        this.width = data.width
-        this.height = data.height
-        this.cropX = data.cropX
-        this.cropY = data.cropY
-        this.type = (data.type!=null) ? eval(data.type) : Sprite.types.NORMAL
-        return this
+    static fromJson(data:SpriteInterface):Sprite {
+        const obj = new Sprite(data)
+        return obj
     }
 
     getImg = () => this.img
