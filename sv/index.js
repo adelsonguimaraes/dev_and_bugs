@@ -10,7 +10,7 @@ const app = express()
 const server = http.createServer(app)
 const io = require('socket.io')(server)
 
-app.use(express.static('./'))
+app.use(express.static('./app/'))
 app.use(cors())
 app.use(express.json())
 
