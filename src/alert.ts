@@ -34,6 +34,6 @@ export class Alert {
         this.timeout = setTimeout((_:number)=>{
             this.timeout=null
             divEventsInfo!.setAttribute("style", "display: none;")
-    }, 3000)
+        }, 3000)
     }
 }
