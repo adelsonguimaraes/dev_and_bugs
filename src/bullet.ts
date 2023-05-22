@@ -12,7 +12,7 @@ interface BulletCoordinates {
     dx: number, 
     dy: number,
     vx: number,
-    vy: number,
+    vy: number
 }
 
 export class Bullet {
@@ -30,6 +30,7 @@ export class Bullet {
     private modes: Array<BulletModes>
     private orX: number
     private orY: number
+    private stopped: boolean = false
 
     constructor({x,y}:{x: number, y: number}) {
         this.x = x
@@ -51,10 +52,16 @@ export class Bullet {
         this.setMode(this.modes[0])
     }
 
+    stop = () => this.stopped = true
+    resume = () => this.stopped = false
+
     setCoords({x,y}:{x?: number, y?: number}) : void {
+        if (this.stopped) return
+
         if (this.currentDelay>this.initDelay) {
             this.x = x ?? this.x
             this.y = y ?? this.y
+
         }else{
             this.currentDelay++
         }

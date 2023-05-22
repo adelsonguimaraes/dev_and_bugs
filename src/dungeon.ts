@@ -36,4 +36,6 @@ export class Dungeon {
     getComputedBossLife = () : number => this.boss.getLife() * this.multiplier
     toEnter = () : boolean => this.inside = true
     toGoOut = () : boolean => this.inside = false
+    isInside = () : boolean => this.inside!
+
 }

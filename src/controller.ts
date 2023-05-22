@@ -18,7 +18,7 @@ export class Controller{
     canvas:Canvas = new Canvas(this.blockHeight)
     player:Player = new Player()
     blocks:Array<Block> = []
-    velocity:number = 10
+    velocity:number = 5
     bullets:Array<Bullet> = []
     bulletSize:number = 2
     totalBullets:number = 1
@@ -79,6 +79,14 @@ export class Controller{
             const msg = `Dugeon ${dungeon.getName()}`
             Alert.displayEventInfo(msg)
             this.canvas.setColor(dungeon.getColor())
+
+            const boss = dungeon.getBoss()
+            const block = this.blocks[20]
+            boss.draw({ctx: this.canvas.ctx, block: block})
+            boss.setComputedLife({
+                baseBugLife: this.baseBugLife, 
+                incrementBugLife: this.incrementBugLife, 
+            })
         }
     }
 
@@ -189,10 +197,11 @@ export class Controller{
     bulletColisionArena(bullet: Bullet) {
         const coords = bullet.getCoords()
         const screen = this.canvas.canvas!
-        const left = (coords.left+screen.offsetLeft)
-        const right = (coords.right+screen.offsetLeft)
-        const top = (coords.top+screen.offsetTop)
+        const left = (coords.left+screen.offsetLeft-coords.size)
+        const right = (coords.right+screen.offsetLeft+coords.size)
+        const top = (coords.top+screen.offsetTop-coords.size)
         const bottom = (coords.bottom+screen.offsetTop)
+
 
         if ((left <= screen.offsetLeft && (bullet.getOrientationX()<0))) {
             bullet.toogleDirectionX()
@@ -265,6 +274,15 @@ export class Controller{
                 bottom: Math.round(block.y+block.height)
             }
 
+            const bulletCoords = {
+                left: Math.floor(coords.left),
+                right: Math.floor(coords.right),
+                top: Math.floor(coords.top),
+                bottom: Math.floor(coords.bottom)
+            }
+            
+            
+
             if ((Math.round(coords.right)>=bcoords.left) 
                 && (Math.round(coords.left)<bcoords.left) 
                 // && (Math.round(coords.right)<=bcoords.right)
@@ -273,6 +291,7 @@ export class Controller{
                 && (bullet.getOrientationX()>0)
                 && (notPhantomEffect)) {
                     colisionLeftBug = block
+                    bullet.stop()
             }
 
             if ((Math.round(coords.left)<=bcoords.right) 
@@ -283,6 +302,7 @@ export class Controller{
                 && (bullet.getOrientationX()<0)
                 && (notPhantomEffect)) {
                     colisionRightBug = block
+                    bullet.stop()
             }
 
             if  ((Math.round(coords.bottom)>=bcoords.top) 
@@ -293,9 +313,11 @@ export class Controller{
                 && (bullet.getOrientationY()<0)
                 && (notPhantomEffect)) {
                     colisionTopBug = block
+                    bullet.stop()
                 }
 
             if ((Math.round(coords.top)<=bcoords.bottom) 
+                // && (Math.round(coords.top)>=bcoords.bottom-20)
                 && (Math.round(coords.top)>=bcoords.top)
                 // && (Math.round(coords.bottom)>bcoords.bottom)
                 && (Math.round(coords.left)<=bcoords.right) 
@@ -303,6 +325,7 @@ export class Controller{
                 && (bullet.getOrientationY()>0)
                 && (notPhantomEffect)) {
                     colisionBottomBug = block
+                    bullet.stop()
                 }
                 
         })
@@ -312,25 +335,29 @@ export class Controller{
         if (colisionLeftBug) {
             bullet.toogleDirectionX()
             bullet.incrementColisions(this.canvas)
-            bullet.setCoords({x: colisionLeftBug.x-coords.size})
+            bullet.resume()
+            bullet.setCoords({x: colisionLeftBug.x-coords.size/2})
             this.apllyBugDamage({block: colisionLeftBug, bullet: bullet})
 
         }else if (colisionRightBug) {
             bullet.toogleDirectionX()
             bullet.incrementColisions(this.canvas)
-            bullet.setCoords({x:colisionRightBug.x+colisionRightBug.width+coords.size})
+            bullet.resume()
+            bullet.setCoords({x:colisionRightBug.x+colisionRightBug.width+coords.size/2})
             this.apllyBugDamage({block: colisionRightBug, bullet: bullet})
 
         }else if (colisionTopBug) {
             bullet.toogleDirectionY()
             bullet.incrementColisions(this.canvas)
-            bullet.setCoords({y:colisionTopBug.y-coords.size})
+            bullet.resume()
+            bullet.setCoords({y:colisionTopBug.y-coords.size/2})
             this.apllyBugDamage({block: colisionTopBug, bullet: bullet})
 
         }else if (colisionBottomBug){
             bullet.toogleDirectionY()
             bullet.incrementColisions(this.canvas)
-            bullet.setCoords({y:colisionBottomBug.y+colisionBottomBug.height+coords.size})
+            bullet.resume()
+            bullet.setCoords({y:colisionBottomBug.y+colisionBottomBug.height+coords.size/2})
             this.apllyBugDamage({block: colisionBottomBug, bullet: bullet})
         }
     }
@@ -341,7 +368,7 @@ export class Controller{
         this.blocks.forEach(e => e.draw(ctx))
         this.blocks.filter(e => e.bug!=null).forEach(e => e.bug!.redraw({ctx: ctx, block: e}))
         this.drawBullets()
-        this.canvas.clearDeadZone()
+        // this.canvas.clearDeadZone()
         this.drawCrosshairs()
         this.player.redraw(ctx)
         this.drawGameOver()
@@ -351,6 +378,24 @@ export class Controller{
         this.displayDamage()
         this.controllerSequenceDrop() 
         Shop.displayValues()
+
+        const block = this.blocks[20]
+        this.dungeons.find(e => e.isInside())?.getBoss().redraw({ctx: ctx, block: block})
+
+        // const b = this.blocks.filter(e => e.bug!)[0]
+        // const bu = {x:b.getX()+70, y:b.getY()+10, s:10}
+        // this.drawTest({x:bu.x, y:bu.y, ctx: this.canvas.ctx})
+
+        // const colisions = {
+        //     left: ((bu.x+bu.s) > b.getX()),
+        //     top:  (bu.y+bu.s) >= b.getY(),
+        //     bottom: (bu.y-bu.s)<=(b.getY()+b.getHeight())
+        // }
+
+        // if (colisions.left && colisions.top && colisions.bottom) {
+        //     console.log(bu.x+bu.s, b.getX());
+        // }
+        
     }
 
     listBugsByEvent(event: string) {
@@ -409,25 +454,26 @@ export class Controller{
     }
 
     drawTest({x, y, ctx}:{x:number, y:number, ctx:CanvasRenderingContext2D}) {
-        // ctx.clearRect(0, 0, this.canvas.canvasWith, this.canvas.canvasHeight)
+        // ctx.clearRect(0, 0, this.canvas.getWidth(), this.canvas.getHeigth())
+        
         ctx.arc(x, y, 10, 0, 2 * Math.PI)
         ctx.fillStyle = 'white'
 
-        const sprite = Bug.models[3].listSprites()[6]
+        // const sprite = Bug.models[3].listSprites()[6]
 
-        const img = new Image()
-        img.onload = () => ctx.drawImage(
-            img, 
-            sprite.getCropX(),
-            sprite.getCropY(),
-            sprite.getWidth(),
-            sprite.getHeight(),
-            x,
-            y, 
-            60,
-            60
-        )
-        img.src = sprite.getImg()
+        // const img = new Image()
+        // img.onload = () => ctx.drawImage(
+        //     img, 
+        //     sprite.getCropX(),
+        //     sprite.getCropY(),
+        //     sprite.getWidth(),
+        //     sprite.getHeight(),
+        //     x,
+        //     y, 
+        //     60,
+        //     60
+        // )
+        // img.src = sprite.getImg()
 
         ctx.fill()
     }
@@ -553,7 +599,6 @@ export class Controller{
             this.displayMenu()
             this.shopActions()
             Shop.reset()
-
 
         })
     }

@@ -7,6 +7,7 @@ export class Dungeon {
         this.getComputedBossLife = () => this.boss.getLife() * this.multiplier;
         this.toEnter = () => this.inside = true;
         this.toGoOut = () => this.inside = false;
+        this.isInside = () => this.inside;
         this.id = id;
         this.name = name;
         this.level = level;

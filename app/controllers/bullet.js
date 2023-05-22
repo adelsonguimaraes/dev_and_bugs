@@ -5,6 +5,9 @@ export class Bullet {
         this.velocityY = 0;
         this.initDelay = 0;
         this.mode = null;
+        this.stopped = false;
+        this.stop = () => this.stopped = true;
+        this.resume = () => this.stopped = false;
         this.getColisions = () => this.colisions;
         this.setSize = (size) => this.size = size;
         this.setInitDelay = (initDelay) => this.initDelay = initDelay;
@@ -32,6 +35,8 @@ export class Bullet {
         this.setMode(this.modes[0]);
     }
     setCoords({ x, y }) {
+        if (this.stopped)
+            return;
         if (this.currentDelay > this.initDelay) {
             this.x = x !== null && x !== void 0 ? x : this.x;
             this.y = y !== null && y !== void 0 ? y : this.y;
