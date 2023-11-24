@@ -6,10 +6,12 @@ export class BugLife {
         this.height = 5;
         this.color = 'red';
     }
-    setComputedLife({ baseBugLife, incrementBugLife, level }) {
+    setComputedLife({ baseBugLife, incrementBugLife, level, isBoss = false }) {
         this.life = (level <= 1)
             ? baseBugLife
             : (baseBugLife + (baseBugLife * (incrementBugLife / 100)));
+        if (isBoss)
+            this.life *= 10;
     }
     setWidth(width) {
         this.width = width;
@@ -23,12 +25,15 @@ export class BugLife {
     getColor() {
         return this.color;
     }
-    draw({ ctx, block }) {
+    draw({ ctx, block, isBoss = false }) {
         ctx.beginPath();
         ctx.fillStyle = '#3e0d0d';
         ctx.fillRect(block.x + 5, (block.y + block.height), 50, this.height);
         ctx.fillStyle = this.color;
-        ctx.fillRect(block.x + 5, (block.y + block.height), this.width, this.height);
+        let width = this.width;
+        if (isBoss)
+            width = (this.width * 2 + 10);
+        ctx.fillRect(block.x + 5, (block.y + block.height), width, this.height);
         ctx.lineWidth = 1;
         ctx.stroke();
         ctx.closePath();

@@ -3,7 +3,7 @@ import { Critical } from './critical.js';
 import { BulletModes } from './bullet_modes.js';
 
 interface BugLifeDrawInterface {
-    ctx: CanvasRenderingContext2D, block: Block
+    ctx: CanvasRenderingContext2D, block: Block, isBoss?: boolean
 }
 
 interface BugLifeCalcLifeInterface {
@@ -12,7 +12,7 @@ interface BugLifeCalcLifeInterface {
 }
 
 interface BugComputedLifeInterface {
-    baseBugLife: number, incrementBugLife: number, level: number
+    baseBugLife: number, incrementBugLife: number, level: number, isBoss?: boolean
 }
 
 export class BugLife{
@@ -28,10 +28,11 @@ export class BugLife{
         this.color = 'red'
     }
 
-    setComputedLife({baseBugLife, incrementBugLife, level}: BugComputedLifeInterface) : void {
+    setComputedLife({baseBugLife, incrementBugLife, level, isBoss=false}: BugComputedLifeInterface) : void {
         this.life = (level<=1) 
             ? baseBugLife 
             : (baseBugLife + (baseBugLife*(incrementBugLife/100)))
+        if (isBoss) this.life *=10
     }
 
     setWidth(width: number) : void {
@@ -50,12 +51,16 @@ export class BugLife{
         return this.color
     }
 
-    draw({ctx, block}: BugLifeDrawInterface) : void {
+    draw({ctx, block, isBoss=false}: BugLifeDrawInterface) : void {
+
         ctx.beginPath()
         ctx.fillStyle = '#3e0d0d'
         ctx.fillRect(block.x+5, (block.y+block.height), 50, this.height)
         ctx.fillStyle = this.color
-        ctx.fillRect(block.x+5, (block.y+block.height), this.width, this.height)
+        let width = this.width 
+        if (isBoss) width = (this.width*2+10)
+        
+        ctx.fillRect(block.x+5, (block.y+block.height), width, this.height)
         ctx.lineWidth = 1
         ctx.stroke()
         ctx.closePath()

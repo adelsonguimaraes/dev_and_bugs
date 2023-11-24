@@ -1,10 +1,13 @@
 import { Sprite } from "./sprite.js"
 import { Block } from './block';
+import { BugLife } from "./bug_life.js";
+import { Bullet } from "./bullet.js";
 
 interface BossDrawInterface {
     ctx: CanvasRenderingContext2D, 
     block: Block,
-    life?: number
+    life?: number,
+    blockLife?: Block
 }
 
 interface BossComputedLifeInterface {
@@ -15,20 +18,19 @@ interface BossComputedLifeInterface {
 interface BossInterface {
     id:number
     name:string
-    life:number
+    life:BugLife
     sprites:Array<Sprite>
 }
 
 export class Boss {
     private id:number
     private name:string
-    private life:number
+    private life: BugLife
     private sprites:Array<Sprite>
     private img?: HTMLImageElement
     private spriteIndex: number = 0
     private spriteEslapsed: number = 0
     private spriteHold: number = 10
-    
 
     constructor({id, name, life, sprites}: BossInterface) {
         this.id = id
@@ -49,12 +51,12 @@ export class Boss {
     }
 
     getLife = () => this.life
-    setLife = (life: number) => this.life = life
+    setLife = (life: BugLife) => this.life = life
 
-    setComputedLife({baseBugLife, incrementBugLife}: BossComputedLifeInterface) : void {
-        this.life = (baseBugLife + (baseBugLife*(incrementBugLife/100)))
-        this.life *= 10
-    }
+    // setComputedLife({baseBugLife, incrementBugLife}: BossComputedLifeInterface) : void {
+    //     this.life = (baseBugLife + (baseBugLife*(incrementBugLife/100)))
+    //     this.life *= 10
+    // }
 
     incrementSpriteIndex = () => {
         const filter = Sprite.types.NORMAL
@@ -77,7 +79,7 @@ export class Boss {
         return sprites[this.spriteIndex]
     }
 
-    redraw({ctx, block}: BossDrawInterface) {
+    redraw({ctx, block, blockLife}: BossDrawInterface) {
         const sprite = this.getSprite()
         const width = (block.getWidth()*2)-10
         const height = (block.getHeight()*2)-10
@@ -95,17 +97,36 @@ export class Boss {
 
         this.incrementSpriteIndex()
 
-        // if (this.life != null) this.life.draw({ctx: ctx, block: block});
+        if (this.life != null) this.life.draw({ctx: ctx, block: blockLife!, isBoss:true})
     }
 
-    draw = ({ctx, block, life}: BossDrawInterface) => {
-        const sprite = this.getSprite();
+    draw = ({ctx, block, blockLife, life}: BossDrawInterface) => {
+        const sprite = this.getSprite()
 
         this.img = new Image()
-        this.img!.onload = () => this.redraw({ctx, block})
+        this.img!.onload = () => this.redraw({ctx, block, blockLife})
         this.img!.src = sprite.getImg()
-        this.setLife(life!)
 
         // block.setBug(this)
+    }
+
+    colision = (bullet: Bullet, blocks: Array<Block>) => {
+        const coords = bullet.getCoords()
+
+        // top
+        blocks.forEach(block => {
+            
+            if (
+                coords.bottom >= block.getY() 
+                && coords.bottom<=(block.getY()+10) 
+                && (coords.right >= block.getX())
+                && coords.left <= block.getX()+block.getWidth()
+                && bullet.getOrientationY()
+            ) {
+                bullet.toogleDirectionY()
+                bullet.setCoords({y: block.getY()+coords.size/2})
+                console.log('colisao sobreo boss');
+            }
+        })
     }
 }

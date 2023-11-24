@@ -45,7 +45,7 @@ export class Controller {
         this.canvas = new Canvas(this.blockHeight);
         this.player = new Player();
         this.blocks = [];
-        this.velocity = 5;
+        this.velocity = 1;
         this.bullets = [];
         this.bulletSize = 2;
         this.totalBullets = 1;
@@ -80,11 +80,17 @@ export class Controller {
                 this.canvas.setColor(dungeon.getColor());
                 const boss = dungeon.getBoss();
                 const block = this.blocks[20];
-                boss.draw({ ctx: this.canvas.ctx, block: block });
-                boss.setComputedLife({
+                const blockLife = this.blocks[26];
+                boss.draw({ ctx: this.canvas.ctx, block: block, blockLife: blockLife });
+                const life = new BugLife();
+                life.setComputedLife({
                     baseBugLife: this.baseBugLife,
                     incrementBugLife: this.incrementBugLife,
+                    level: this.level,
+                    isBoss: true
                 });
+                life.draw({ ctx: this.canvas.ctx, block: blockLife });
+                boss.setLife(life);
             }
         };
         this.controllerSequenceDrop = () => {
@@ -228,7 +234,7 @@ export class Controller {
             return false;
         let count = 0;
         while (count < sequence) {
-            this.dropBug({ model });
+            // this.dropBug({model})
             count++;
         }
     }
@@ -331,12 +337,6 @@ export class Controller {
                 top: Math.round(block.y),
                 bottom: Math.round(block.y + block.height)
             };
-            const bulletCoords = {
-                left: Math.floor(coords.left),
-                right: Math.floor(coords.right),
-                top: Math.floor(coords.top),
-                bottom: Math.floor(coords.bottom)
-            };
             if ((Math.round(coords.right) >= bcoords.left)
                 && (Math.round(coords.left) < bcoords.left)
                 // && (Math.round(coords.right)<=bcoords.right)
@@ -426,7 +426,8 @@ export class Controller {
         this.controllerSequenceDrop();
         Shop.displayValues();
         const block = this.blocks[20];
-        (_a = this.dungeons.find(e => e.isInside())) === null || _a === void 0 ? void 0 : _a.getBoss().redraw({ ctx: ctx, block: block });
+        const blockLife = this.blocks[26];
+        (_a = this.dungeons.find(e => e.isInside())) === null || _a === void 0 ? void 0 : _a.getBoss().redraw({ ctx: ctx, block: block, blockLife: blockLife });
         // const b = this.blocks.filter(e => e.bug!)[0]
         // const bu = {x:b.getX()+70, y:b.getY()+10, s:10}
         // this.drawTest({x:bu.x, y:bu.y, ctx: this.canvas.ctx})
@@ -472,6 +473,14 @@ export class Controller {
             bullet.draw(ctx);
             this.bulletColisionArena(bullet);
             this.bulletColisionBug(bullet);
+            const dungeon = this.dungeons.find(e => e.isInside());
+            if (dungeon) {
+                const boss = dungeon.getBoss();
+                if (boss.getLife().getWidth() > 0) {
+                    const blocks = [this.blocks[20], this.blocks[21], this.blocks[26], this.blocks[27]];
+                    boss.colision(bullet, blocks);
+                }
+            }
         }
     }
     animate() {

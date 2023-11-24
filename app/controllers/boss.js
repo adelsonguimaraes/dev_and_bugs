@@ -6,6 +6,10 @@ export class Boss {
         this.spriteHold = 10;
         this.getLife = () => this.life;
         this.setLife = (life) => this.life = life;
+        // setComputedLife({baseBugLife, incrementBugLife}: BossComputedLifeInterface) : void {
+        //     this.life = (baseBugLife + (baseBugLife*(incrementBugLife/100)))
+        //     this.life *= 10
+        // }
         this.incrementSpriteIndex = () => {
             const filter = Sprite.types.NORMAL;
             const sprites = this.sprites.filter(e => e.getType() == filter);
@@ -27,13 +31,30 @@ export class Boss {
             const sprites = this.sprites.filter(e => e.getType() == filter);
             return sprites[this.spriteIndex];
         };
-        this.draw = ({ ctx, block, life }) => {
+        this.draw = ({ ctx, block, blockLife, life }) => {
             const sprite = this.getSprite();
             this.img = new Image();
-            this.img.onload = () => this.redraw({ ctx, block });
+            this.img.onload = () => this.redraw({ ctx, block, blockLife });
             this.img.src = sprite.getImg();
-            this.setLife(life);
             // block.setBug(this)
+        };
+        this.colision = (bullet, blocks) => {
+            const coords = bullet.getCoords();
+            // top
+            blocks.forEach(block => {
+                console.log(block.getY());
+
+
+                if (coords.bottom >= block.getY()
+                    && coords.bottom <= (block.getY() + 10)
+                    && (coords.right >= block.getX())
+                    && coords.left <= block.getX() + block.getWidth()
+                    && bullet.getOrientationY()) {
+                    bullet.toogleDirectionY();
+                    bullet.setCoords({ y: block.getY() + coords.size / 2 });
+                    console.log('colisao sobreo boss');
+                }
+            });
         };
         this.id = id;
         this.name = name;
@@ -49,11 +70,7 @@ export class Boss {
         });
         return obj;
     }
-    setComputedLife({ baseBugLife, incrementBugLife }) {
-        this.life = (baseBugLife + (baseBugLife * (incrementBugLife / 100)));
-        this.life *= 10;
-    }
-    redraw({ ctx, block }) {
+    redraw({ ctx, block, blockLife }) {
         const sprite = this.getSprite();
         const width = (block.getWidth() * 2) - 10;
         const height = (block.getHeight() * 2) - 10;
@@ -63,6 +80,7 @@ export class Boss {
         ctx.drawImage(this.img, sprite.getCropX(), sprite.getCropY(), sprite.getWidth(), sprite.getHeight(), block.x + 5, block.y + 5, width, height);
         ctx.closePath();
         this.incrementSpriteIndex();
-        // if (this.life != null) this.life.draw({ctx: ctx, block: block});
+        if (this.life != null)
+            this.life.draw({ ctx: ctx, block: blockLife, isBoss: true });
     }
 }
